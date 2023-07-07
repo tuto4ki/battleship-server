@@ -48,7 +48,7 @@ wsServer.on("connection", (ws) => {
           updateRooms(roomsDB, usersDB, wsServer.clients);
           break;
         default:
-          console.log(`${jsonMessage.type} that command don\`t exist``);
+          console.log(`${jsonMessage.type} that command don\`t exist`);
       }
     } catch (error) {
       console.error(error);
