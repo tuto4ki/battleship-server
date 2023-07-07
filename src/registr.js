@@ -46,7 +46,7 @@ export default function registr(user, usersDB, ws) {
   usersDB.push({
     name: user.name,
     password: user.password,
-    index: idUsers,
+    index: idUsers
   });
   return {
     type: "reg",

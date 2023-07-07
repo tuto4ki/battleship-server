@@ -3,7 +3,8 @@ const WebSocketServer = WebSocket.Server || WSWebSocketServer;
 import 'dotenv/config';
 
 import registr from './registr.js';
-import createRoom from './createRoom.js';
+import { createRoom, getRooms, updateRooms } from './createRoom.js';
+import createGame from './createGame.js';
 
 
 const wsServer = new WebSocketServer({ port: Number(process.env.PORT) });
@@ -11,7 +12,7 @@ const usersDB = [];
 const roomsDB = [];
 
 wsServer.on("connection", (ws) => {
-  console.log("Connection open", ws.url);
+  console.log("Connection open");
 
   ws.on("message", (message) => {
     try {
@@ -26,13 +27,28 @@ wsServer.on("connection", (ws) => {
           ws.send(respJSON);
           break;
         case "create_room":
-          const respRoom = createRoom(roomsDB, usersDB[ws.id]);
-          const respRoomJSON = JSON.stringify(respRoom);
-          console.log("create_room", respRoomJSON);
-          ws.send(respRoomJSON);
+          createRoom(roomsDB, usersDB[ws.id]);
+          updateRooms(roomsDB, usersDB, wsServer.clients);
+          break;
+        case "add_user_to_room":
+          const data2 = JSON.parse(jsonMessage.data);
+          const indexRoom = +data2.indexRoom;
+          const respCreateRoom = createGame(roomsDB, indexRoom, ws.id);
+          const respCreateRoomJSON = JSON.stringify(respCreateRoom);
+          console.log("add_user_to_room", respCreateRoomJSON);
+
+          for(let i = 0; i < roomsDB[indexRoom].usersID.length; i++) {
+            for (let user of wsServer.clients) {
+              if (user.id === roomsDB[indexRoom].usersID[i]) {
+                user.send(respCreateRoomJSON);
+                break;
+              }
+            }
+          }
+          updateRooms(roomsDB, usersDB, wsServer.clients);
           break;
         default:
-          console.log("That command don`t exist");
+          console.log(`${jsonMessage.type} that command don\`t exist``);
       }
     } catch (error) {
       console.error(error);
