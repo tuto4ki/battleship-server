@@ -3,8 +3,9 @@ const WebSocketServer = WebSocket.Server || WSWebSocketServer;
 import 'dotenv/config';
 
 import registr from './registr.js';
-import { createRoom, getRooms, updateRooms } from './createRoom.js';
-import createGame from './createGame.js';
+import { createRoom, addShips, updateRooms } from './rooms.js';
+import createGame from './game.js';
+import { attack } from './attack.js';
 
 
 const wsServer = new WebSocketServer({ port: Number(process.env.PORT) });
@@ -25,6 +26,8 @@ wsServer.on("connection", (ws) => {
           const respJSON = JSON.stringify(resp);
           console.log("reg", respJSON);
           ws.send(respJSON);
+
+          updateRooms(roomsDB, usersDB, wsServer.clients);
           break;
         case "create_room":
           createRoom(roomsDB, usersDB[ws.id]);
@@ -33,19 +36,50 @@ wsServer.on("connection", (ws) => {
         case "add_user_to_room":
           const data2 = JSON.parse(jsonMessage.data);
           const indexRoom = +data2.indexRoom;
-          const respCreateRoom = createGame(roomsDB, indexRoom, ws.id);
-          const respCreateRoomJSON = JSON.stringify(respCreateRoom);
-          console.log("add_user_to_room", respCreateRoomJSON);
+          createGame(roomsDB, indexRoom, ws.id, wsServer.clients);
 
-          for(let i = 0; i < roomsDB[indexRoom].usersID.length; i++) {
-            for (let user of wsServer.clients) {
-              if (user.id === roomsDB[indexRoom].usersID[i]) {
-                user.send(respCreateRoomJSON);
-                break;
+          updateRooms(roomsDB, usersDB, wsServer.clients);
+          break;
+        case "add_ships":
+          const gameJSON = JSON.parse(jsonMessage.data);
+          const startGame = addShips(roomsDB, gameJSON);
+          if (startGame) {
+            const startGameJSON = JSON.stringify(startGame);
+
+            for(let i = 0; i < roomsDB[gameJSON.gameId].usersID.length; i++) {
+              for (let user of wsServer.clients) {
+                if (user.id === roomsDB[gameJSON.gameId].usersID[i].index) {
+
+/*
+                  const obj = JSON.stringify({
+                    ships: roomsDB[gameJSON.gameId].usersID[i].ships,
+                    currentPlayerIndex: gameJSON.indexPlayer,
+                  });
+                  const startGameJSON = JSON.stringify({
+                    type: "start_game",
+                    data: JSON.stringify(obj),
+                    id: 0,
+                  });
+*/
+                  console.log("start_game", startGameJSON);
+                  user.send(startGameJSON);
+                  const whoAttack = {
+                    type: "turn",
+                    data: JSON.stringify({ currentPlayer: gameJSON.indexPlayer}),
+                    id: 0,
+                  }
+                  const whoAttackJSON = JSON.stringify(whoAttack);
+                  console.log("turn", whoAttack)
+                  user.send(whoAttackJSON);
+                  break;
+                }
               }
             }
           }
-          updateRooms(roomsDB, usersDB, wsServer.clients);
+          break;
+        case "attack":
+          const attackJSON = JSON.parse(jsonMessage.data);
+          attack(attackJSON, roomsDB[attackJSON.gameID, wsServer.clients]);
           break;
         default:
           console.log(`${jsonMessage.type} that command don\`t exist`);
