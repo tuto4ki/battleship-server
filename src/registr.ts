@@ -1,11 +1,13 @@
-import { MESSAGE_ERROR } from "./constants.js";
+import { WebSocket } from 'ws';
+import { MESSAGE_ERROR } from './constants';
+import { TUser } from './type';
 
-export default function registr(user, usersDB, ws) {
+export default function registr(user: TUser, usersDB: Array<TUser>, ws: WebSocket) {
   const indexUser = usersDB.findIndex((item) => item.name === user.name);
 
   if (!isValidationUser(user)) {
     return {
-      type: "reg",
+      type: 'reg',
       data: JSON.stringify({
         name: user.name,
         index: indexUser,
@@ -19,18 +21,18 @@ export default function registr(user, usersDB, ws) {
   if (indexUser >= 0) {
     if (usersDB[indexUser].password === user.password) {
       return {
-        type: "reg",
+        type: 'reg',
         data: JSON.stringify({
           name: user.name,
           index: indexUser,
           error: false,
-          errorText: "",
+          errorText: '',
         }),
         id: 0,
       };
     }
     return {
-      type: "reg",
+      type: 'reg',
       data: JSON.stringify({
         name: user.name,
         index: indexUser,
@@ -42,25 +44,26 @@ export default function registr(user, usersDB, ws) {
   }
 
   const idUsers = usersDB.length;
-  ws.id = idUsers;
+  //idPlayer = idUsers;
   usersDB.push({
     name: user.name,
     password: user.password,
-    index: idUsers
+    index: idUsers,
+    ws: ws,
   });
   return {
-    type: "reg",
+    type: 'reg',
     data: JSON.stringify({
       name: user.name,
       index: idUsers,
       error: false,
-      errorText: "",
+      errorText: '',
     }),
     id: 0,
   };
 }
 
-function isValidationUser(user) {
+function isValidationUser(user: TUser) {
   if (user.name.length < 2 || user.password.length < 5) {
     return false;
   }

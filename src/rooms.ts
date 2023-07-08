@@ -1,4 +1,6 @@
-export function createRoom(roomsDB, user) {
+import { TRequestAddShips, TRoom, TUser, TResponseRoom } from './type';
+
+export function createRoom(roomsDB: TRoom[], user: TUser) {
   try {
     const idRoom = roomsDB.length;
     roomsDB.push({
@@ -20,11 +22,11 @@ export function createRoom(roomsDB, user) {
       id: 0,
     };
   } catch (err) {
-    console.error(err.message);
+    console.error((err as Error).message);
   }
 }
 
-function getRooms(roomsDB, usersDB) {
+function getRooms(roomsDB: TRoom[], usersDB: TUser[]) {
   const rooms = roomsDB.reduce((arr, item) => {
     if (item.usersID.length < 2 ) {
       arr.push({
@@ -36,7 +38,7 @@ function getRooms(roomsDB, usersDB) {
       });
     }
     return arr;
-  }, []);
+  }, new Array<TResponseRoom>());
   
   return {
     type: "update_room",
@@ -46,16 +48,20 @@ function getRooms(roomsDB, usersDB) {
 }
 
 
-export function updateRooms(roomsDB, usersDB, clients) {
+export function updateRooms(roomsDB: TRoom[], usersDB: TUser[]) {
   const rooms = getRooms(roomsDB, usersDB);
   const roomsJSON = JSON.stringify(rooms);
   console.log("update_room", roomsJSON);
+  usersDB.forEach((user) => {
+    user.ws.send(roomsJSON);
+  });
+  /*
   for (let user of clients) {
     user.send(roomsJSON);
-  }
+  }*/
 }
 
-export function addShips(roomsDB, data) {
+export function addShips(roomsDB: TRoom[], data: TRequestAddShips) {
   let countUserReady = 0;
   const idUser = data.indexPlayer;
   for (let i = 0; i < roomsDB[data.gameId].usersID.length; i++) {

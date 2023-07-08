@@ -6,14 +6,17 @@ import registr from './registr.js';
 import { createRoom, addShips, updateRooms } from './rooms.js';
 import createGame from './game.js';
 import { attack } from './attack.js';
+import { TUser, TRoom } from './type.js';
 
 
 const wsServer = new WebSocketServer({ port: Number(process.env.PORT) });
-const usersDB = [];
-const roomsDB = [];
+const usersDB: Array<TUser> = new Array<TUser>();
+const roomsDB: Array<TRoom> = new Array<TRoom>();
 
 wsServer.on("connection", (ws) => {
   console.log("Connection open");
+  
+  //const indexUser = 0;
 
   ws.on("message", (message) => {
     try {
@@ -27,18 +30,24 @@ wsServer.on("connection", (ws) => {
           console.log("reg", respJSON);
           ws.send(respJSON);
 
-          updateRooms(roomsDB, usersDB, wsServer.clients);
+          updateRooms(roomsDB, usersDB);
           break;
         case "create_room":
-          createRoom(roomsDB, usersDB[ws.id]);
-          updateRooms(roomsDB, usersDB, wsServer.clients);
+          const idUserCrt = usersDB.find((user) => user.ws === ws);
+          if (idUserCrt) {
+            createRoom(roomsDB, idUserCrt);
+            updateRooms(roomsDB, usersDB);
+          }
           break;
         case "add_user_to_room":
           const data2 = JSON.parse(jsonMessage.data);
           const indexRoom = +data2.indexRoom;
-          createGame(roomsDB, indexRoom, ws.id, wsServer.clients);
+          const idUserAdd = usersDB.find((user) => user.ws === ws);
+          if (idUserAdd) {
+            createGame(roomsDB, usersDB, indexRoom, idUserAdd.index);
+          }
 
-          updateRooms(roomsDB, usersDB, wsServer.clients);
+          updateRooms(roomsDB, usersDB);
           break;
         case "add_ships":
           const gameJSON = JSON.parse(jsonMessage.data);
@@ -47,8 +56,8 @@ wsServer.on("connection", (ws) => {
             const startGameJSON = JSON.stringify(startGame);
 
             for(let i = 0; i < roomsDB[gameJSON.gameId].usersID.length; i++) {
-              for (let user of wsServer.clients) {
-                if (user.id === roomsDB[gameJSON.gameId].usersID[i].index) {
+              //for (let user of wsServer.clients) {
+                //if (user.id === roomsDB[gameJSON.gameId].usersID[i].index) {
 
 /*
                   const obj = JSON.stringify({
@@ -61,25 +70,26 @@ wsServer.on("connection", (ws) => {
                     id: 0,
                   });
 */
-                  console.log("start_game", startGameJSON);
-                  user.send(startGameJSON);
-                  const whoAttack = {
-                    type: "turn",
-                    data: JSON.stringify({ currentPlayer: gameJSON.indexPlayer}),
-                    id: 0,
-                  }
-                  const whoAttackJSON = JSON.stringify(whoAttack);
-                  console.log("turn", whoAttack)
-                  user.send(whoAttackJSON);
-                  break;
-                }
+              const idUserShip = roomsDB[gameJSON.gameId].usersID[i].index;
+              console.log("start_game", startGameJSON);
+              usersDB[idUserShip]?.ws?.send(startGameJSON);
+              const whoAttack = {
+                type: "turn",
+                data: JSON.stringify({ currentPlayer: gameJSON.indexPlayer}),
+                id: 0,
               }
+              const whoAttackJSON = JSON.stringify(whoAttack);
+              console.log("turn", whoAttack)
+              usersDB[idUserShip]?.ws?.send(whoAttackJSON);
+              //break;
+                //}
+              //}
             }
           }
           break;
         case "attack":
           const attackJSON = JSON.parse(jsonMessage.data);
-          attack(attackJSON, roomsDB[attackJSON.gameID, wsServer.clients]);
+          //attack(attackJSON, roomsDB[attackJSON.gameID, wsServer.clients]);
           break;
         default:
           console.log(`${jsonMessage.type} that command don\`t exist`);
