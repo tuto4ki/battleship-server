@@ -11,14 +11,17 @@ export type TRoom = {
   indexRoom: number;
   usersID: [{
     index: number;
-    ships: [];
+    ships: Array<TCell>;
+    shipsMatrix: Array<Array<number>>;
+    attackMatrix: Array<Array<number>>;
   }],
+  currentPlayer: number,
 }
 
 export type TRequestAddShips = {
   indexPlayer: number;
   gameId: number;
-  ships: [];
+  ships: Array<TCell>;
 }
 
 export type TResponseRoom = {
@@ -36,6 +39,29 @@ export type TRequestAttack = {
   indexPlayer: number;
 }
 
+export type TRequestRandomAttack = {
+  gameId: number;
+  indexPlayer: number;
+}
+
+export enum EShotType {
+  miss = 'miss', // 3
+  killed = 'killed', // 2
+  shot = 'shot', // 1
+};
+
+export type TCell = {
+  position: TPosition;
+  direction: boolean;
+  length: number;
+  type: 'small' | 'medium' | 'large' | 'huge';
+}
+
+export type TPosition = {
+  x: number;
+  y: number;
+}
+/*
 export type TROOM = {
   indexRoom: number;
   userID: number;
@@ -48,7 +74,7 @@ export type TROOM = {
       };
       direction: boolean;
       length: number;
-      type: "small" | "medium" | "large" | "huge";
+      type: 'small' | 'medium' | 'large' | 'huge';
     }
   ];
   shipsEnemy: [
@@ -59,7 +85,7 @@ export type TROOM = {
       };
       direction: boolean;
       length: number;
-      type: "small" | "medium" | "large" | "huge";
+      type: 'small' | 'medium' | 'large' | 'huge';
     }
   ];
-};
+};*/
