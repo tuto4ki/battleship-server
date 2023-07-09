@@ -1,7 +1,8 @@
 import { FIELD_SIZE } from './constants';
-import { TRequestAttack, TRoom, TUser, EShotType, TPosition, TRequestRandomAttack } from './type';
+import { gameOver } from './game';
+import { TRequestAttack, TRoom, TUser, EShotType, TPosition, TRequestRandomAttack, TWins } from './type';
 
-export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: TUser[]) {
+export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: TUser[], winsDB: TWins[]) {
   console.log(data, roomsCurrent, usersDB);
   if (roomsCurrent.currentPlayer !== data.indexPlayer) {
     return;
@@ -43,10 +44,12 @@ export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: TUser
       console.log("turn", whoAttackJSON);
       usersDB[idUser].ws.send(whoAttackJSON);
     }
+
+    gameOver(player, roomsCurrent, usersDB, winsDB);
   }
 }
 
-export function randomAttack(data: TRequestRandomAttack, roomsCurrent: TRoom, usersDB: TUser[]) {
+export function randomAttack(data: TRequestRandomAttack, roomsCurrent: TRoom, usersDB: TUser[], winsDB: TWins[]) {
   if (roomsCurrent.currentPlayer !== data.indexPlayer) {
     return;
   }
@@ -55,7 +58,7 @@ export function randomAttack(data: TRequestRandomAttack, roomsCurrent: TRoom, us
     const randomShotMatrix = lineMatrix(player.attackMatrix);
     console.log(randomShotMatrix);
     const randomCell = Math.floor(Math.random() * randomShotMatrix.length);
-    attack({...data, x: randomShotMatrix[randomCell][0], y: randomShotMatrix[randomCell][1] }, roomsCurrent, usersDB);
+    attack({...data, x: randomShotMatrix[randomCell][0], y: randomShotMatrix[randomCell][1] }, roomsCurrent, usersDB, winsDB);
   }
 }
 

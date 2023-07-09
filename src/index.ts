@@ -4,19 +4,18 @@ import 'dotenv/config';
 
 import registr from './registr.js';
 import { createRoom, addShips, updateRooms } from './rooms.js';
-import createGame from './game.js';
+import createGame, { sendUpdateWins } from './game.js';
 import { attack, randomAttack } from './attack.js';
-import { TUser, TRoom, TRequestAddShips } from './type.js';
+import { TUser, TRoom, TRequestAddShips, TWins } from './type.js';
 
 
 const wsServer = new WebSocketServer({ port: Number(process.env.PORT) });
 const usersDB: Array<TUser> = new Array<TUser>();
 const roomsDB: Array<TRoom> = new Array<TRoom>();
+const winsDB: TWins[] = new Array<TWins>();
 
 wsServer.on("connection", (ws) => {
   console.log("Connection open");
-  
-  //const indexUser = 0;
 
   ws.on("message", (message) => {
     try {
@@ -31,6 +30,7 @@ wsServer.on("connection", (ws) => {
           ws.send(respJSON);
 
           updateRooms(roomsDB, usersDB);
+          sendUpdateWins(winsDB, usersDB);
           break;
         case "create_room":
           const idUserCrt = usersDB.find((user) => user.ws === ws);
@@ -55,11 +55,11 @@ wsServer.on("connection", (ws) => {
           break;
         case "attack":
           const attackJSON = JSON.parse(jsonMessage.data);
-          attack(attackJSON, roomsDB[attackJSON.gameId], usersDB);
+          attack(attackJSON, roomsDB[attackJSON.gameId], usersDB, winsDB);
           break;
         case 'randomAttack':
           const attackRandomJSON = JSON.parse(jsonMessage.data);
-          randomAttack(attackRandomJSON, roomsDB[attackRandomJSON.gameId], usersDB);
+          randomAttack(attackRandomJSON, roomsDB[attackRandomJSON.gameId], usersDB, winsDB);
           break;
         case 'single_play':
           break;

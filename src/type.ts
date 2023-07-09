@@ -7,15 +7,22 @@ export type TUser = {
   ws: WebSocket;
 };
 
+export type TWins = {
+  idUser: number;
+  wins: number;
+}
+
 export type TRoom = {
   indexRoom: number;
-  usersID: [{
-    index: number;
-    ships: Array<TCell>;
-    shipsMatrix: Array<Array<number>>;
-    attackMatrix: Array<Array<number>>;
-  }],
+  usersID: TUsersInRoom[],
   currentPlayer: number,
+}
+
+export type TUsersInRoom = {
+  index: number;
+  ships: Array<TCell>;
+  shipsMatrix: Array<Array<number>>;
+  attackMatrix: Array<Array<number>>;
 }
 
 export type TRequestAddShips = {

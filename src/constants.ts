@@ -7,4 +7,4 @@ export const FIELD_SIZE = 10;
 
 export const PLAYER_COUNT = 2;
 
-//export const SHIP_CELL_COUNT = 20;
+export const CELL_COUNT = 20;
