@@ -1,24 +1,56 @@
-import { FIELD_SIZE } from './constants';
+import { getEmptyCells, getKillCells, getKillOneCell } from './cells';
 import { gameOver } from './game';
-import { TRequestAttack, TRoom, TUser, EShotType, TPosition, TRequestRandomAttack, TWins } from './type';
+import { TRequestAttack, TRoom, TUser, EShotType, TPosition, TRequestRandomAttack, TWins, TCell, TUsersInRoom } from './type';
 
 export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: TUser[], winsDB: TWins[]) {
-  console.log(data, roomsCurrent, usersDB);
   if (roomsCurrent.currentPlayer !== data.indexPlayer) {
     return;
   }
-  const enemy = roomsCurrent.usersID.find((user) => user.index !== data.indexPlayer);
-  const player = roomsCurrent.usersID.find((user) => user.index === data.indexPlayer);
-  if (enemy && player) {
-    const statusAttack = getStatusAttack({ x: data.x, y: data.y }, player?.attackMatrix, enemy?.shipsMatrix);
 
+  const player = roomsCurrent.usersID.find((user) => user.index === data.indexPlayer);
+  if (player?.attackMatrix[data.x][data.y]) {
+    return;
+  }
+
+  const enemy = roomsCurrent.usersID.find((user) => user.index !== data.indexPlayer);
+  if (enemy && player) {
+    const statusAttack = getStatusAttack({ x: data.x, y: data.y }, player.attackMatrix, enemy.shipsMatrix, enemy.ships);
+  
+    let turnIndexAttack = statusAttack === EShotType.miss ? enemy.index : data.indexPlayer;
+    roomsCurrent.currentPlayer = turnIndexAttack;
+
+    if (statusAttack === EShotType.killed) {
+      const cellKill = getKillOneCell(enemy.ships, {x: data.x, y: data.y});
+      if (cellKill) {
+        const emptyCells = getEmptyCells(cellKill);
+        sendMessageAttack(player, emptyCells, roomsCurrent, usersDB, EShotType.miss);
+        const killCell = getKillCells(cellKill);
+        sendMessageAttack(player, killCell, roomsCurrent, usersDB, EShotType.killed);
+      }
+      gameOver(player, roomsCurrent, usersDB, winsDB);
+    } else {
+      sendMessageAttack(player, [{ x: data.x, y: data.y }], roomsCurrent, usersDB, statusAttack);
+    }
+  }
+}
+
+function sendMessageAttack (player: TUsersInRoom, killCell: TPosition[], roomsCurrent: TRoom, usersDB: TUser[], status: EShotType) {
+  const whoAttack = {
+    type: "turn",
+    data: JSON.stringify({ currentPlayer: roomsCurrent.currentPlayer}),
+    id: 0,
+  }
+  const whoAttackJSON = JSON.stringify(whoAttack);
+
+  for (let k = 0; k < killCell.length; k++) {
+    player.attackMatrix[killCell[k].x][killCell[k].y] = getNumberStatusAttack(status);
     const attack = JSON.stringify({
       position: {
-          x: data.x,
-          y: data.y,
+          x: killCell[k].x,
+          y: killCell[k].y,
       },
-      currentPlayer: data.indexPlayer,
-      status: statusAttack,
+      currentPlayer: player.index,
+      status: status,
     });
     const attackJSON = JSON.stringify({
       type: 'attack',
@@ -26,26 +58,15 @@ export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: TUser
       id: 0,
     });
 
-    let turnIndexAttack = statusAttack === EShotType.miss ? enemy.index : data.indexPlayer;
-    roomsCurrent.currentPlayer = turnIndexAttack;
-    const whoAttack = {
-      type: "turn",
-      data: JSON.stringify({ currentPlayer: turnIndexAttack}),
-      id: 0,
-    }
-    const whoAttackJSON = JSON.stringify(whoAttack);
-
     for (let i = 0; i < roomsCurrent.usersID.length; i++) {
       const idUser = roomsCurrent.usersID[i].index;
-      
+  
       console.log("attack", attackJSON);
       usersDB[idUser].ws.send(attackJSON);
 
       console.log("turn", whoAttackJSON);
       usersDB[idUser].ws.send(whoAttackJSON);
     }
-
-    gameOver(player, roomsCurrent, usersDB, winsDB);
   }
 }
 
@@ -56,33 +77,40 @@ export function randomAttack(data: TRequestRandomAttack, roomsCurrent: TRoom, us
   const player = roomsCurrent.usersID.find((user) => user.index === data.indexPlayer);
   if (player) {
     const randomShotMatrix = lineMatrix(player.attackMatrix);
-    console.log(randomShotMatrix);
     const randomCell = Math.floor(Math.random() * randomShotMatrix.length);
     attack({...data, x: randomShotMatrix[randomCell][0], y: randomShotMatrix[randomCell][1] }, roomsCurrent, usersDB, winsDB);
   }
 }
 
-/**
- * shot - 1
- * killed - 2
- * miss - 3
- */
-function getStatusAttack(posPlayer: TPosition, attackMatrix: Array<Array<number>>, enemyShips: Array<Array<number>>): EShotType {
+function getNumberStatusAttack(status: EShotType) {
+  switch(status) {
+    case EShotType.killed:
+      return 2;
+    case EShotType.shot:
+      return 1;
+    default:
+      return 3;
+  }
+}
+
+function getStatusAttack(posPlayer: TPosition, attackMatrix: Array<Array<number>>, enemyShips: Array<Array<number>>, enemyMatrix: TCell[]): EShotType {
   if (enemyShips[posPlayer.x][posPlayer.y]) {
     enemyShips[posPlayer.x][posPlayer.y] = 0;
-    if (
-      (posPlayer.x - 1 > 0 && enemyShips[posPlayer.x - 1][posPlayer.y]) ||
-      (posPlayer.x + 1 < FIELD_SIZE && enemyShips[posPlayer.x + 1][posPlayer.y]) ||
-      (posPlayer.y - 1 > 0 && enemyShips[posPlayer.x][posPlayer.y - 1]) ||
-      (posPlayer.y + 1 < FIELD_SIZE && enemyShips[posPlayer.x][posPlayer.y + 1])
-    ) {
-      attackMatrix[posPlayer.x][posPlayer.y] = 1;
-      return EShotType.shot;
+    const cellKill = getKillOneCell(enemyMatrix, posPlayer);
+    if (cellKill) {
+      const killCell = getKillCells(cellKill);
+      let isShot = false;
+      for (let i = 0; i < killCell.length; i++) {
+        if (enemyShips[killCell[i].x][killCell[i].y]) {
+          isShot = true;
+        }
+      }
+      if (isShot) {
+        return EShotType.shot;
+      }
+      return EShotType.killed;
     }
-    attackMatrix[posPlayer.x][posPlayer.y] = 2;
-    return EShotType.killed;
   }
-  attackMatrix[posPlayer.x][posPlayer.y] = 3;
   return EShotType.miss;
 }
 

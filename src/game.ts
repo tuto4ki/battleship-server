@@ -68,7 +68,7 @@ function isGameOver(ships: number[][]) {
   let count = 0;
   for(let i = 0; i < ships.length; i++) {
     for(let j = 0; j < ships[i].length; j++) {
-      if (ships[i][j] === 1 || ships[i][j] === 2) {
+      if (ships[i][j] === 2) {
         count++;
       }
     }

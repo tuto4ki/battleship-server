@@ -110,12 +110,12 @@ export function addShips(roomsDB: TRoom[], usersDB: TUser[], data: TRequestAddSh
 function createShipsMatrix(ships: TCell[]) {
   const matrix: Array<Array<number>> = createFillMatrix(FIELD_SIZE, 0);
   for (let i = 0; i < ships.length; i++) {
-    const direction_x = ships[i].direction ? 0 : 1;
-    const direction_y = ships[i].direction ? 1 : 0;
+    const directionX = ships[i].direction ? 0 : 1;
+    const directionY = ships[i].direction ? 1 : 0;
     const start_x = ships[i].position.x;
     const start_y = ships[i].position.y;
     for (let j = 0; j < ships[i].length; j++) {
-      matrix[start_x + direction_x * j][start_y + direction_y * j] = 1;
+      matrix[start_x + directionX * j][start_y + directionY * j] = 1;
     }
   }
   return matrix;
