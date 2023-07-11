@@ -1,10 +1,11 @@
 import { TRequestAddShips, TRoom, TUser, TResponseRoom, TCell } from './type';
 import { FIELD_SIZE } from './constants';
+import { lastIndex } from './common';
 
-export function createRoom(roomsDB: TRoom[], user: TUser) {
+export function createRoom(roomsDB: Map<number, TRoom>, user: TUser) {
   try {
-    const idRoom = roomsDB.length;
-    roomsDB.push({
+    const idRoom = lastIndex(roomsDB) + 1;
+    roomsDB.set(idRoom, {
       indexRoom: idRoom,
       usersID: [{
         index: user.index,
@@ -30,16 +31,19 @@ export function createRoom(roomsDB: TRoom[], user: TUser) {
   }
 }
 
-function getRooms(roomsDB: TRoom[], usersDB: TUser[]) {
-  const rooms = roomsDB.reduce((arr, item) => {
-    if (item.usersID.length < 2 ) {
-      arr.push({
-        roomId: item.indexRoom,
-        roomUsers: [{
-          name: usersDB[item.usersID[0].index].name,
-          index: usersDB[item.usersID[0].index].index,
-        }],
-      });
+function getRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
+  const rooms = [...roomsDB].reduce((arr, item) => {
+    if (item[1].usersID.length < 2 ) {
+      const user = usersDB.get(item[1].usersID[0].index);
+      if (user) {
+        arr.push({
+          roomId: item[1].indexRoom,
+          roomUsers: [{
+            name: user.name,
+            index: user.index,
+          }],
+        });
+      }
     }
     return arr;
   }, new Array<TResponseRoom>());
@@ -52,7 +56,7 @@ function getRooms(roomsDB: TRoom[], usersDB: TUser[]) {
 }
 
 
-export function updateRooms(roomsDB: TRoom[], usersDB: TUser[]) {
+export function updateRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
   const rooms = getRooms(roomsDB, usersDB);
   const roomsJSON = JSON.stringify(rooms);
   console.log("update_room", roomsJSON);
@@ -61,25 +65,26 @@ export function updateRooms(roomsDB: TRoom[], usersDB: TUser[]) {
   });
 }
 
-export function addShips(roomsDB: TRoom[], usersDB: TUser[], data: TRequestAddShips) {
+export function addShips(currentRoom: TRoom, usersDB: Map<number, TUser>, data: TRequestAddShips) {
   let countUserReady = 0;
   const idUser = data.indexPlayer;
-  for (let i = 0; i < roomsDB[data.gameId].usersID.length; i++) {
-    if (roomsDB[data.gameId].usersID[i].index === idUser) {
-      roomsDB[data.gameId].usersID[i].ships = data.ships;
-      roomsDB[data.gameId].usersID[i].shipsMatrix = createShipsMatrix(roomsDB[data.gameId].usersID[i].ships);
-      roomsDB[data.gameId].usersID[i].attackMatrix = createFillMatrix(FIELD_SIZE, 0);
+  //const currentRoom = roomsDB.get(data.gameId);
+  for (let i = 0; i < currentRoom.usersID.length; i++) {
+    if (currentRoom.usersID[i].index === idUser) {
+      currentRoom.usersID[i].ships = data.ships;
+      currentRoom.usersID[i].shipsMatrix = createShipsMatrix(currentRoom.usersID[i].ships);
+      currentRoom.usersID[i].attackMatrix = createFillMatrix(FIELD_SIZE, 0);
     }
 
-    if (roomsDB[data.gameId].usersID[i].ships.length > 0) {
+    if (currentRoom.usersID[i].ships.length > 0) {
       countUserReady++;
     }
   }
 
-  if (roomsDB[data.gameId].usersID.length === countUserReady) {
-    roomsDB[data.gameId].currentPlayer = data.indexPlayer;
-    for(let i = 0; i < roomsDB[data.gameId].usersID.length; i++) {
-      const user = roomsDB[data.gameId].usersID[i];
+  if (currentRoom.usersID.length === countUserReady) {
+    currentRoom.currentPlayer = data.indexPlayer;
+    for(let i = 0; i < currentRoom.usersID.length; i++) {
+      const user = currentRoom.usersID[i];
       const startGame = {
         type: "start_game",
         data: JSON.stringify({
@@ -91,16 +96,16 @@ export function addShips(roomsDB: TRoom[], usersDB: TUser[], data: TRequestAddSh
 
       const startGameJSON = JSON.stringify(startGame);
       console.log("start_game", startGameJSON);
-      usersDB[user.index]?.ws?.send(startGameJSON);
+      usersDB.get(user.index)?.ws?.send(startGameJSON);
       const whoAttack = {
         type: "turn",
-        data: JSON.stringify({ currentPlayer: roomsDB[data.gameId].currentPlayer}),
+        data: JSON.stringify({ currentPlayer: currentRoom.currentPlayer}),
         id: 0,
       }
 
       const whoAttackJSON = JSON.stringify(whoAttack);
       console.log("turn", whoAttack)
-      usersDB[user.index]?.ws?.send(whoAttackJSON);
+      usersDB.get(user.index)?.ws?.send(whoAttackJSON);
 
     }
   }
@@ -130,4 +135,8 @@ function createFillMatrix(size: number, number: number): Array<Array<number>> {
     }
   }
   return arr;
+}
+
+export function removeRoom(userDB: Map<number, TRoom>,index: number) {
+  //userDB[index] = null;
 }

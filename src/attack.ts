@@ -2,7 +2,7 @@ import { getEmptyCells, getKillCells, getKillOneCell } from './cells';
 import { gameOver } from './game';
 import { TRequestAttack, TRoom, TUser, EShotType, TPosition, TRequestRandomAttack, TWins, TCell, TUsersInRoom } from './type';
 
-export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: TUser[], winsDB: TWins[]) {
+export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: Map<number, TUser>, winsDB: TWins[]) {
   if (roomsCurrent.currentPlayer !== data.indexPlayer) {
     return;
   }
@@ -14,7 +14,7 @@ export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: TUser
 
   const enemy = roomsCurrent.usersID.find((user) => user.index !== data.indexPlayer);
   if (enemy && player) {
-    const statusAttack = getStatusAttack({ x: data.x, y: data.y }, player.attackMatrix, enemy.shipsMatrix, enemy.ships);
+    const statusAttack = getStatusAttack({ x: data.x, y: data.y }, enemy.shipsMatrix, enemy.ships);
   
     let turnIndexAttack = statusAttack === EShotType.miss ? enemy.index : data.indexPlayer;
     roomsCurrent.currentPlayer = turnIndexAttack;
@@ -34,7 +34,7 @@ export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: TUser
   }
 }
 
-function sendMessageAttack (player: TUsersInRoom, killCell: TPosition[], roomsCurrent: TRoom, usersDB: TUser[], status: EShotType) {
+function sendMessageAttack (player: TUsersInRoom, killCell: TPosition[], roomsCurrent: TRoom, usersDB: Map<number, TUser>, status: EShotType) {
   const whoAttack = {
     type: "turn",
     data: JSON.stringify({ currentPlayer: roomsCurrent.currentPlayer}),
@@ -62,15 +62,15 @@ function sendMessageAttack (player: TUsersInRoom, killCell: TPosition[], roomsCu
       const idUser = roomsCurrent.usersID[i].index;
   
       console.log("attack", attackJSON);
-      usersDB[idUser].ws.send(attackJSON);
+      usersDB.get(idUser)?.ws.send(attackJSON);
 
       console.log("turn", whoAttackJSON);
-      usersDB[idUser].ws.send(whoAttackJSON);
+      usersDB.get(idUser)?.ws.send(whoAttackJSON);
     }
   }
 }
 
-export function randomAttack(data: TRequestRandomAttack, roomsCurrent: TRoom, usersDB: TUser[], winsDB: TWins[]) {
+export function randomAttack(data: TRequestRandomAttack, roomsCurrent: TRoom, usersDB: Map<number, TUser>, winsDB: TWins[]) {
   if (roomsCurrent.currentPlayer !== data.indexPlayer) {
     return;
   }
@@ -93,7 +93,7 @@ function getNumberStatusAttack(status: EShotType) {
   }
 }
 
-function getStatusAttack(posPlayer: TPosition, attackMatrix: Array<Array<number>>, enemyShips: Array<Array<number>>, enemyMatrix: TCell[]): EShotType {
+function getStatusAttack(posPlayer: TPosition, enemyShips: Array<Array<number>>, enemyMatrix: TCell[]): EShotType {
   if (enemyShips[posPlayer.x][posPlayer.y]) {
     enemyShips[posPlayer.x][posPlayer.y] = 0;
     const cellKill = getKillOneCell(enemyMatrix, posPlayer);

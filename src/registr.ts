@@ -1,30 +1,31 @@
 import { WebSocket } from 'ws';
 import { MESSAGE_ERROR } from './constants';
 import { TUser } from './type';
+import { getUserByName, lastIndex } from './common';
 
-export default function registr(user: TUser, usersDB: Array<TUser>, ws: WebSocket) {
-  const indexUser = usersDB.findIndex((item) => item.name === user.name);
-
+export default function registr(user: TUser, usersDB: Map<number, TUser>, ws: WebSocket) {
   if (!isValidationUser(user)) {
     return {
       type: 'reg',
       data: JSON.stringify({
         name: user.name,
-        index: indexUser,
+        index: -1,
         error: true,
         errorText: MESSAGE_ERROR.validation,
       }),
       id: 0,
     };
   }
-  
-  if (indexUser >= 0) {
-    if (usersDB[indexUser].password === user.password) {
+
+  const indexUser = getUserByName(usersDB, user.name); //usersDB.findIndex((item) => item.name === user.name);
+
+  if (indexUser) {
+    if (indexUser.password === user.password) {
       return {
         type: 'reg',
         data: JSON.stringify({
           name: user.name,
-          index: indexUser,
+          index: indexUser.index,
           error: false,
           errorText: '',
         }),
@@ -35,7 +36,7 @@ export default function registr(user: TUser, usersDB: Array<TUser>, ws: WebSocke
       type: 'reg',
       data: JSON.stringify({
         name: user.name,
-        index: indexUser,
+        index: indexUser.index,
         error: true,
         errorText: MESSAGE_ERROR.passwordDif,
       }),
@@ -43,9 +44,9 @@ export default function registr(user: TUser, usersDB: Array<TUser>, ws: WebSocke
     };
   }
 
-  const idUsers = usersDB.length;
+  const idUsers = lastIndex(usersDB) + 1;
   //idPlayer = idUsers;
-  usersDB.push({
+  usersDB.set(idUsers, {
     name: user.name,
     password: user.password,
     index: idUsers,

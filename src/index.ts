@@ -6,16 +6,17 @@ import registr from './registr.js';
 import { createRoom, addShips, updateRooms } from './rooms.js';
 import createGame, { sendUpdateWins } from './game.js';
 import { attack, randomAttack } from './attack.js';
-import { TUser, TRoom, TRequestAddShips, TWins } from './type.js';
+import { TUser, TRoom, TWins } from './type.js';
+import { getUserByWs } from './common.js';
 
 
 const wsServer = new WebSocketServer({ port: Number(process.env.PORT) });
-const usersDB: Array<TUser> = new Array<TUser>();
-const roomsDB: Array<TRoom> = new Array<TRoom>();
+const usersDB: Map<number, TUser> = new Map<number, TUser>();
+const roomsDB: Map<number, TRoom> = new Map<number, TRoom>();
 const winsDB: TWins[] = new Array<TWins>();
 
 wsServer.on("connection", (ws) => {
-  console.log("Connection open");
+  console.log(`Connection open port: ${wsServer.options.port};`);
 
   ws.on("message", (message) => {
     try {
@@ -33,7 +34,7 @@ wsServer.on("connection", (ws) => {
           sendUpdateWins(winsDB, usersDB);
           break;
         case "create_room":
-          const idUserCrt = usersDB.find((user) => user.ws === ws);
+          const idUserCrt = getUserByWs(usersDB, ws);
           if (idUserCrt) {
             createRoom(roomsDB, idUserCrt);
             updateRooms(roomsDB, usersDB);
@@ -42,7 +43,7 @@ wsServer.on("connection", (ws) => {
         case "add_user_to_room":
           const data2 = JSON.parse(jsonMessage.data);
           const indexRoom = +data2.indexRoom;
-          const idUserAdd = usersDB.find((user) => user.ws === ws);
+          const idUserAdd = getUserByWs(usersDB, ws);
           if (idUserAdd) {
             createGame(roomsDB, usersDB, indexRoom, idUserAdd.index);
           }
@@ -51,15 +52,24 @@ wsServer.on("connection", (ws) => {
           break;
         case "add_ships":
           const gameJSON = JSON.parse(jsonMessage.data);
-          addShips(roomsDB, usersDB, gameJSON);
+          const currentRoomAddShips = roomsDB.get(gameJSON.gameId);
+          if (currentRoomAddShips) {
+            addShips(currentRoomAddShips, usersDB, gameJSON);
+          }
           break;
         case "attack":
           const attackJSON = JSON.parse(jsonMessage.data);
-          attack(attackJSON, roomsDB[attackJSON.gameId], usersDB, winsDB);
+          const currentRoom = roomsDB.get(attackJSON.gameId);
+          if (currentRoom) {
+            attack(attackJSON, currentRoom, usersDB, winsDB);
+          }
           break;
         case 'randomAttack':
           const attackRandomJSON = JSON.parse(jsonMessage.data);
-          randomAttack(attackRandomJSON, roomsDB[attackRandomJSON.gameId], usersDB, winsDB);
+          const room = roomsDB.get(attackRandomJSON.gameId);
+          if (room) {
+            randomAttack(attackRandomJSON, room, usersDB, winsDB);
+          }
           break;
         case 'single_play':
           break;
@@ -72,6 +82,17 @@ wsServer.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
+    /*
+    const user = usersDB.find((user) => user.ws === ws);
+    if (user) {
+      for (let i = 0; i < roomsDB.length; i++) {
+        const userInRoom = roomsDB[i].usersID.find((item) => item.index === user.index);
+        if (userInRoom) {
+          console.log(userInRoom);
+        }
+      }
+    }
+    */
     console.log("Connection close");
   });
 });
