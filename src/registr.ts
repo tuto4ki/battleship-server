@@ -45,7 +45,7 @@ export default function registr(user: TUser, usersDB: Map<number, TUser>, ws: We
   }
 
   const idUsers = lastIndex(usersDB) + 1;
-  //idPlayer = idUsers;
+
   usersDB.set(idUsers, {
     name: user.name,
     password: user.password,

@@ -1,4 +1,5 @@
 import { CELL_COUNT } from './constants';
+import { removeRoom } from './rooms';
 import { TRoom, TUser, TUsersInRoom, TWins } from './type';
 
 export default function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>, indexRoom: number, indexUser: number) {
@@ -32,8 +33,8 @@ export default function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<num
   return false;
 }
 
-export function gameOver(player: TUsersInRoom, roomsCurrent: TRoom, usersDB: Map<number, TUser>, winsDB: TWins[]) {
-  if (isGameOver(player.attackMatrix)) {
+export function gameOver(player: TUsersInRoom, roomsCurrent: TRoom, usersDB: Map<number, TUser>, roomDB: Map<number, TRoom>, winsDB: TWins[]) {
+  //if (isGameOver(player.attackMatrix)) {
     const winData = {
       winPlayer: player.index,
     };
@@ -59,12 +60,15 @@ export function gameOver(player: TUsersInRoom, roomsCurrent: TRoom, usersDB: Map
         wins: 1,
       });
     }
-    
+
     sendUpdateWins(winsDB, usersDB);
-  }
+    removeRoom(roomDB, roomsCurrent.indexRoom);
+    //return true;
+  //}
+  //return false;
 }
 
-function isGameOver(ships: number[][]) {
+export function isGameOver(ships: number[][]) {
   let count = 0;
   for(let i = 0; i < ships.length; i++) {
     for(let j = 0; j < ships[i].length; j++) {

@@ -68,7 +68,6 @@ export function updateRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TU
 export function addShips(currentRoom: TRoom, usersDB: Map<number, TUser>, data: TRequestAddShips) {
   let countUserReady = 0;
   const idUser = data.indexPlayer;
-  //const currentRoom = roomsDB.get(data.gameId);
   for (let i = 0; i < currentRoom.usersID.length; i++) {
     if (currentRoom.usersID[i].index === idUser) {
       currentRoom.usersID[i].ships = data.ships;
@@ -137,6 +136,6 @@ function createFillMatrix(size: number, number: number): Array<Array<number>> {
   return arr;
 }
 
-export function removeRoom(userDB: Map<number, TRoom>,index: number) {
-  //userDB[index] = null;
+export function removeRoom(roomDB: Map<number, TRoom>, index: number) {
+  roomDB.delete(index);
 }

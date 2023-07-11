@@ -1,5 +1,6 @@
 import { getEmptyCells, getKillCells, getKillOneCell } from './cells';
 import { gameOver } from './game';
+import { removeRoom } from './rooms';
 import { TRequestAttack, TRoom, TUser, EShotType, TPosition, TRequestRandomAttack, TWins, TCell, TUsersInRoom } from './type';
 
 export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: Map<number, TUser>, winsDB: TWins[]) {
@@ -27,7 +28,7 @@ export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: Map<n
         const killCell = getKillCells(cellKill);
         sendMessageAttack(player, killCell, roomsCurrent, usersDB, EShotType.killed);
       }
-      gameOver(player, roomsCurrent, usersDB, winsDB);
+
     } else {
       sendMessageAttack(player, [{ x: data.x, y: data.y }], roomsCurrent, usersDB, statusAttack);
     }
