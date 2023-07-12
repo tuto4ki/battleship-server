@@ -8,7 +8,7 @@ import createGame, { gameOver, isGameOver, sendUpdateWins } from './game.js';
 import { attack, randomAttack } from './attack.js';
 import { TUser, TRoom, TWins } from './type.js';
 import { getUserByWs } from './common.js';
-import { disconnect } from 'process';
+import { randomLocationShips } from './randomShips.js';
 import { disconnectUser } from './wsListener.js';
 
 
@@ -86,6 +86,7 @@ wsServer.on('connection', (ws) => {
           }
           break;
         case 'single_play':
+          randomLocationShips();
           break;
         default:
           console.log(`${jsonMessage.type} that command don\`t exist`);

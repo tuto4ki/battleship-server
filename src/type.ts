@@ -68,31 +68,7 @@ export type TPosition = {
   x: number;
   y: number;
 }
-/*
-export type TROOM = {
-  indexRoom: number;
-  userID: number;
-  enemyId: number;
-  ships: [
-    {
-      position: {
-        x: number;
-        y: number;
-      };
-      direction: boolean;
-      length: number;
-      type: 'small' | 'medium' | 'large' | 'huge';
-    }
-  ];
-  shipsEnemy: [
-    {
-      position: {
-        x: number;
-        y: number;
-      };
-      direction: boolean;
-      length: number;
-      type: 'small' | 'medium' | 'large' | 'huge';
-    }
-  ];
-};*/
+
+export type TSHIP_DATA = {
+  [key: string]: Array<number>,
+}
