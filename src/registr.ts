@@ -17,7 +17,7 @@ export default function registr(user: TUser, usersDB: Map<number, TUser>, ws: We
     };
   }
 
-  const indexUser = getUserByName(usersDB, user.name); //usersDB.findIndex((item) => item.name === user.name);
+  const indexUser = getUserByName(usersDB, user.name);
 
   if (indexUser) {
     if (indexUser.password === user.password) {

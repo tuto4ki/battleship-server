@@ -1,9 +1,14 @@
 import { getEmptyCells, getKillCells, getKillOneCell } from './cells';
-import { gameOver } from './game';
-import { removeRoom } from './rooms';
+import { gameOver, isGameOver } from './game';
 import { TRequestAttack, TRoom, TUser, EShotType, TPosition, TRequestRandomAttack, TWins, TCell, TUsersInRoom } from './type';
 
-export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: Map<number, TUser>, winsDB: TWins[]) {
+export function attack(
+  data: TRequestAttack,
+  roomsCurrent: TRoom,
+  usersDB: Map<number, TUser>,
+  winsDB: TWins[],
+  roomsDB: Map<number, TRoom>
+) {
   if (roomsCurrent.currentPlayer !== data.indexPlayer) {
     return;
   }
@@ -29,8 +34,26 @@ export function attack(data: TRequestAttack, roomsCurrent: TRoom, usersDB: Map<n
         sendMessageAttack(player, killCell, roomsCurrent, usersDB, EShotType.killed);
       }
 
+      const isEndGame = isGameOver(player.attackMatrix);
+      if (isEndGame) {
+        gameOver(player, roomsCurrent, usersDB, roomsDB, winsDB);
+      }
+
     } else {
       sendMessageAttack(player, [{ x: data.x, y: data.y }], roomsCurrent, usersDB, statusAttack);
+    }
+
+    if (
+      (roomsCurrent.currentPlayer === enemy.index && !usersDB.get(enemy.index)?.ws) ||
+      (roomsCurrent.currentPlayer === player.index && !usersDB.get(player.index)?.ws)
+    ) {
+      randomAttack(
+        { gameId: roomsCurrent.indexRoom, indexPlayer: roomsCurrent.currentPlayer },
+        roomsCurrent,
+        usersDB,
+        winsDB,
+        roomsDB,
+      );
     }
   }
 }
@@ -63,15 +86,15 @@ function sendMessageAttack (player: TUsersInRoom, killCell: TPosition[], roomsCu
       const idUser = roomsCurrent.usersID[i].index;
   
       console.log("attack", attackJSON);
-      usersDB.get(idUser)?.ws.send(attackJSON);
+      usersDB.get(idUser)?.ws?.send(attackJSON);
 
       console.log("turn", whoAttackJSON);
-      usersDB.get(idUser)?.ws.send(whoAttackJSON);
+      usersDB.get(idUser)?.ws?.send(whoAttackJSON);
     }
   }
 }
 
-export function randomAttack(data: TRequestRandomAttack, roomsCurrent: TRoom, usersDB: Map<number, TUser>, winsDB: TWins[]) {
+export function randomAttack(data: TRequestRandomAttack, roomsCurrent: TRoom, usersDB: Map<number, TUser>, winsDB: TWins[], roomDB: Map<number, TRoom>) {
   if (roomsCurrent.currentPlayer !== data.indexPlayer) {
     return;
   }
@@ -79,7 +102,7 @@ export function randomAttack(data: TRequestRandomAttack, roomsCurrent: TRoom, us
   if (player) {
     const randomShotMatrix = lineMatrix(player.attackMatrix);
     const randomCell = Math.floor(Math.random() * randomShotMatrix.length);
-    attack({...data, x: randomShotMatrix[randomCell][0], y: randomShotMatrix[randomCell][1] }, roomsCurrent, usersDB, winsDB);
+    attack({...data, x: randomShotMatrix[randomCell][0], y: randomShotMatrix[randomCell][1] }, roomsCurrent, usersDB, winsDB, roomDB);
   }
 }
 

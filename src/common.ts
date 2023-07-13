@@ -25,3 +25,20 @@ export function lastIndex<T>(map: Map<number, T>) {
   }
   return Array.from(map)[map.size - 1][0];
 }
+
+export function getTypeShips(type: number) {
+  switch(type) {
+    case 4:
+      return 'huge';
+    case 3:
+      return 'large';
+    case 2:
+      return 'medium';
+    default:
+      return 'small';
+  }
+}
+
+export function createFillMatrix(size: number, number: number): Array<Array<number>> {
+  return [...Array(size)].map(() => Array(size).fill(number));
+}

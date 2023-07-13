@@ -8,12 +8,18 @@ import createGame, { gameOver, isGameOver, sendUpdateWins } from './game.js';
 import { attack, randomAttack } from './attack.js';
 import { TUser, TRoom, TWins } from './type.js';
 import { getUserByWs } from './common.js';
-import { randomLocationShips } from './randomShips.js';
 import { disconnectUser } from './wsListener.js';
+import { startSingleMode } from './singlePlay.js';
+import { BOT_INDEX } from './constants.js';
 
 
 const wsServer = new WebSocketServer({ port: Number(process.env.PORT) });
 const usersDB: Map<number, TUser> = new Map<number, TUser>();
+usersDB.set(BOT_INDEX, {
+  name: 'bot',
+  password: 'bot',
+  index: BOT_INDEX,
+});
 const roomsDB: Map<number, TRoom> = new Map<number, TRoom>();
 const winsDB: TWins[] = new Array<TWins>();
 
@@ -63,30 +69,19 @@ wsServer.on('connection', (ws) => {
           const attackJSON = JSON.parse(jsonMessage.data);
           const currentRoom = roomsDB.get(attackJSON.gameId);
           if (currentRoom) {
-            attack(attackJSON, currentRoom, usersDB, winsDB);
-            const player = currentRoom.usersID.find((user) => user.index === attackJSON.indexPlayer);
-            if (player) {
-              if (isGameOver(player.attackMatrix)) {
-                gameOver(player, currentRoom, usersDB, roomsDB, winsDB);
-              }
-            }
+            attack(attackJSON, currentRoom, usersDB, winsDB, roomsDB);
           }
           break;
         case 'randomAttack':
           const attackRandomJSON = JSON.parse(jsonMessage.data);
           const room = roomsDB.get(attackRandomJSON.gameId);
           if (room) {
-            randomAttack(attackRandomJSON, room, usersDB, winsDB);
-            const player = room.usersID.find((user) => user.index === attackRandomJSON.indexPlayer);
-            if (player) {
-              if (isGameOver(player.attackMatrix)) {
-                gameOver(player, room, usersDB, roomsDB, winsDB);
-              }
-            }
+            randomAttack(attackRandomJSON, room, usersDB, winsDB, roomsDB);
           }
           break;
         case 'single_play':
-          randomLocationShips();
+          console.log('single play');
+          startSingleMode(usersDB, roomsDB, ws);
           break;
         default:
           console.log(`${jsonMessage.type} that command don\`t exist`);

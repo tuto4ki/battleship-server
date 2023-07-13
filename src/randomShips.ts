@@ -1,23 +1,25 @@
-import { SHIP_DATA } from './constants';
-
-const matrix: Array<Array<number>> = [...Array(10)].map(() => Array(10).fill(0));
+import { createFillMatrix, getTypeShips } from './common';
+import { FIELD_SIZE, SHIP_DATA } from './constants';
+import { TCell } from './type';
 
 export function randomLocationShips() {
+  const matrix: Array<Array<number>> = createFillMatrix(FIELD_SIZE, 0);
+  const ships: Array<TCell> = new Array<TCell>();
   for (let type in SHIP_DATA) {
     let count = SHIP_DATA[type][0];
     let decks = SHIP_DATA[type][1];
     for (let i = 0; i < count; i++) {
-      let options = getCoordsDecks(decks);
-      console.log(options, decks);
-      createShip(options, decks);
+      let options = getCoordsDecks(decks, matrix, ships);
+
+      createShip(options, decks, matrix, ships);
     }
   }
-  console.log(matrix);
+  return { ships, matrix };
 }
 
 const getRandom = (n: number): number => Math.floor(Math.random() * (n + 1));
 
-function getCoordsDecks(decks: number): {
+function getCoordsDecks(decks: number, matrix: Array<Array<number>>, ships: Array<TCell>): {
   x: number,
   y: number,
   kx: number,
@@ -38,13 +40,17 @@ function getCoordsDecks(decks: number): {
   }
 
   const obj = {x, y, kx, ky}
-  const result = checkLocationShip(obj, decks);
+  const result = checkLocationShip(obj, decks, matrix);
 
-  if (!result) return getCoordsDecks(decks);
+  if (!result) return getCoordsDecks(decks, matrix, ships);
   return obj;
 }
 
-function checkLocationShip(obj: { x: number, y: number, kx: number, ky: number, fromX?: number, toX?: number, fromY?: number, toY?: number }, decks: number) {
+function checkLocationShip(
+  obj: { x: number, y: number, kx: number, ky: number, fromX?: number, toX?: number, fromY?: number, toY?: number },
+  decks: number,
+  matrix: Array<Array<number>>
+) {
   let { x, y, kx, ky, fromX, toX, fromY, toY } = obj;
 
   fromX = (x == 0) ? x : x - 1;
@@ -73,12 +79,23 @@ function checkLocationShip(obj: { x: number, y: number, kx: number, ky: number, 
   return true;
 }
 
-function createShip(cell: { x: number, y: number, kx: number, ky: number }, decks: number) {
+function createShip(
+  cell: { x: number, y: number, kx: number, ky: number },
+  decks: number, matrix: Array<Array<number>>,
+  ships: Array<TCell>
+) {
   let { x, y, kx, ky } = cell;
   let k = 0;
+  ships.push({
+    position: { x, y },
+    direction: Boolean(ky),
+    length: decks,
+    type: getTypeShips(decks),
+  });
 
   while (k < decks) {
-    let i = x + k * kx, j = y + k * ky;
+    const i = x + k * kx;
+    const j = y + k * ky;
 
     matrix[i][j] = 1;
     k++;

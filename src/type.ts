@@ -4,7 +4,7 @@ export type TUser = {
   name: string;
   password: string;
   index: number;
-  ws: WebSocket;
+  ws?: WebSocket;
 };
 
 export type TWins = {

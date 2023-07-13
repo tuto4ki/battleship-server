@@ -1,5 +1,5 @@
 import { CELL_COUNT } from './constants';
-import { removeRoom } from './rooms';
+import { removeRoom, updateRooms } from './rooms';
 import { TRoom, TUser, TUsersInRoom, TWins } from './type';
 
 export default function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>, indexRoom: number, indexUser: number) {
@@ -25,7 +25,7 @@ export default function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<num
         };
         const respJSON = JSON.stringify(res);
         console.log("create_game", respJSON);
-        usersDB.get(currentIdUser)?.ws.send(respJSON);
+        usersDB.get(currentIdUser)?.ws?.send(respJSON);
       }
     }
     return false;
@@ -34,23 +34,23 @@ export default function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<num
 }
 
 export function gameOver(player: TUsersInRoom, roomsCurrent: TRoom, usersDB: Map<number, TUser>, roomDB: Map<number, TRoom>, winsDB: TWins[]) {
-  //if (isGameOver(player.attackMatrix)) {
-    const winData = {
-      winPlayer: player.index,
-    };
-    const winDataJSON = JSON.stringify({
-      type: 'finish',
-      data: JSON.stringify(winData),
-      id: 0,
-    });
+  const winData = {
+    winPlayer: player.index,
+  };
+  const winDataJSON = JSON.stringify({
+    type: 'finish',
+    data: JSON.stringify(winData),
+    id: 0,
+  });
 
-    for (let i = 0; i < roomsCurrent.usersID.length; i++) {
-      const idUser = roomsCurrent.usersID[i].index;
+  for (let i = 0; i < roomsCurrent.usersID.length; i++) {
+    const idUser = roomsCurrent.usersID[i].index;
 
-      console.log('finish', winDataJSON);
-      usersDB.get(idUser)?.ws.send(winDataJSON);
-    }
+    console.log('finish', winDataJSON);
+    usersDB.get(idUser)?.ws?.send(winDataJSON);
+  }
 
+  if (usersDB.get(player.index)?.ws) {
     const winsInBoard = winsDB.find((item) => item.idUser === player.index);
     if (winsInBoard) {
       winsInBoard.wins = winsInBoard.wins + 1;
@@ -60,12 +60,11 @@ export function gameOver(player: TUsersInRoom, roomsCurrent: TRoom, usersDB: Map
         wins: 1,
       });
     }
-
     sendUpdateWins(winsDB, usersDB);
-    removeRoom(roomDB, roomsCurrent.indexRoom);
-    //return true;
-  //}
-  //return false;
+  }
+
+  removeRoom(roomDB, roomsCurrent.indexRoom);
+  updateRooms(roomDB, usersDB);
 }
 
 export function isGameOver(ships: number[][]) {
@@ -77,6 +76,7 @@ export function isGameOver(ships: number[][]) {
       }
     }
   }
+  console.log('CELL_COUNT', count);
   return count === CELL_COUNT;
 }
 
@@ -96,6 +96,6 @@ export function sendUpdateWins(winsDB: TWins[], usersDB: Map<number, TUser>) {
   })
 
   for (let user of usersDB.values()) {
-    user.ws.send(updateWinsJSON)
+    user.ws?.send(updateWinsJSON)
   }
 }

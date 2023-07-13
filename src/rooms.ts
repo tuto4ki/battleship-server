@@ -1,6 +1,6 @@
 import { TRequestAddShips, TRoom, TUser, TResponseRoom, TCell } from './type';
-import { FIELD_SIZE } from './constants';
-import { lastIndex } from './common';
+import { FIELD_SIZE, PLAYER_COUNT } from './constants';
+import { createFillMatrix, lastIndex } from './common';
 
 export function createRoom(roomsDB: Map<number, TRoom>, user: TUser) {
   try {
@@ -15,17 +15,7 @@ export function createRoom(roomsDB: Map<number, TRoom>, user: TUser) {
       }],
       currentPlayer: user.index,
     });
-    return {
-      type: "update_room",
-      data: JSON.stringify([{
-        roomId: idRoom,
-        roomUsers: [{
-          name: user.name,
-          index: user.index,
-        }],
-      }]),
-      id: 0,
-    };
+    return idRoom;
   } catch (err) {
     console.error((err as Error).message);
   }
@@ -33,16 +23,18 @@ export function createRoom(roomsDB: Map<number, TRoom>, user: TUser) {
 
 function getRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
   const rooms = [...roomsDB].reduce((arr, item) => {
-    if (item[1].usersID.length < 2 ) {
+    if (item[1].usersID.length < PLAYER_COUNT ) {
       const user = usersDB.get(item[1].usersID[0].index);
+      
       if (user) {
-        arr.push({
-          roomId: item[1].indexRoom,
-          roomUsers: [{
-            name: user.name,
-            index: user.index,
-          }],
-        });
+        if (userInGame(roomsDB, user))
+          arr.push({
+            roomId: item[1].indexRoom,
+            roomUsers: [{
+              name: user.name,
+              index: user.index,
+            }],
+          });
       }
     }
     return arr;
@@ -55,13 +47,28 @@ function getRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
   };
 }
 
+function userInGame (roomsDB: Map<number, TRoom>, user: TUser): boolean {
+  //const room = [...roomsDB];
+  
+  for(let room of roomsDB.values()) {
+    if (room.usersID.length === PLAYER_COUNT) {
+      const userPlay = room.usersID.find((userInGame) => userInGame.index === user.index);
+      
+      if (userPlay) {console.log(userPlay);
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 
 export function updateRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
   const rooms = getRooms(roomsDB, usersDB);
   const roomsJSON = JSON.stringify(rooms);
   console.log("update_room", roomsJSON);
   usersDB.forEach((user) => {
-    user.ws.send(roomsJSON);
+    user.ws?.send(roomsJSON);
   });
 }
 
@@ -123,17 +130,6 @@ function createShipsMatrix(ships: TCell[]) {
     }
   }
   return matrix;
-}
-
-function createFillMatrix(size: number, number: number): Array<Array<number>> {
-  const arr = new Array<Array<number>>(size);
-  for (let i = 0 ; i < size; i++) {
-    arr[i] = new Array<number>(size);
-    for (let j = 0; j < size; j++){
-      arr[i][j] = number;
-    }
-  }
-  return arr;
 }
 
 export function removeRoom(roomDB: Map<number, TRoom>, index: number) {
