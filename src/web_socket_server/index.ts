@@ -4,7 +4,7 @@ import 'dotenv/config';
 
 import registr from './registr.js';
 import { createRoom, addShips, updateRooms } from './rooms.js';
-import createGame, { gameOver, isGameOver, sendUpdateWins } from './game.js';
+import { createGame, sendUpdateWins } from './game.js';
 import { attack, randomAttack } from './attack.js';
 import { TUser, TRoom, TWins } from './type.js';
 import { getUserByWs } from './common.js';
@@ -80,7 +80,6 @@ wsServer.on('connection', (ws) => {
           }
           break;
         case 'single_play':
-          console.log('single play');
           startSingleMode(usersDB, roomsDB, ws);
           break;
         default:

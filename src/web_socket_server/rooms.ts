@@ -27,7 +27,8 @@ function getRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
       const user = usersDB.get(item[1].usersID[0].index);
       
       if (user) {
-        if (userInGame(roomsDB, user))
+        const isUserInGame = userInGame(roomsDB, user);
+        if (isUserInGame)
           arr.push({
             roomId: item[1].indexRoom,
             roomUsers: [{
@@ -48,20 +49,17 @@ function getRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
 }
 
 function userInGame (roomsDB: Map<number, TRoom>, user: TUser): boolean {
-  //const room = [...roomsDB];
-  
   for(let room of roomsDB.values()) {
     if (room.usersID.length === PLAYER_COUNT) {
       const userPlay = room.usersID.find((userInGame) => userInGame.index === user.index);
       
-      if (userPlay) {console.log(userPlay);
+      if (userPlay) {
         return false;
       }
     }
   }
   return true;
 }
-
 
 export function updateRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
   const rooms = getRooms(roomsDB, usersDB);

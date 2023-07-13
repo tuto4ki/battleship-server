@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 
 import { getUserByWs } from './common';
-import createGame from './game';
+import { createGame } from './game';
 import { randomLocationShips } from './randomShips';
 import { addShips, createRoom, updateRooms } from './rooms';
 import { TRoom, TUser } from './type';
@@ -16,7 +16,6 @@ export function startSingleMode(usersDB: Map<number, TUser>, roomsDB: Map<number
       createGame(roomsDB, usersDB, indexRoom, BOT_INDEX);
     
       updateRooms(roomsDB, usersDB);
-      console.log(roomsDB);
 
       const { ships, matrix } = randomLocationShips();
       const botShips = {

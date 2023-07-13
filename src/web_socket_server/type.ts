@@ -52,9 +52,9 @@ export type TRequestRandomAttack = {
 }
 
 export enum EShotType {
-  miss = 'miss', // 3
-  killed = 'killed', // 2
-  shot = 'shot', // 1
+  miss = 'miss',
+  killed = 'killed',
+  shot = 'shot',
 };
 
 export type TCell = {

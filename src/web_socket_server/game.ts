@@ -2,7 +2,7 @@ import { CELL_COUNT } from './constants';
 import { removeRoom, updateRooms } from './rooms';
 import { TRoom, TUser, TUsersInRoom, TWins } from './type';
 
-export default function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>, indexRoom: number, indexUser: number) {
+export function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>, indexRoom: number, indexUser: number) {
   const room = roomsDB.get(indexRoom);
   if (room?.indexRoom === indexRoom) {
     if (room.usersID.length < 2 && room.usersID[0].index !== indexUser) {
@@ -76,7 +76,6 @@ export function isGameOver(ships: number[][]) {
       }
     }
   }
-  console.log('CELL_COUNT', count);
   return count === CELL_COUNT;
 }
 
