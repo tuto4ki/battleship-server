@@ -1,103 +1,108 @@
-import { createFillMatrix, getTypeShips } from './common';
+import { createFillMatrix, getTypeShips, getRandom } from './common';
 import { FIELD_SIZE, SHIP_DATA } from './constants';
-import { TCell } from './type';
+import { TCell, TPosition } from './type';
 
-export function randomLocationShips() {
+export function getRandomLocationShips() {
   const matrix: Array<Array<number>> = createFillMatrix(FIELD_SIZE, 0);
   const ships: Array<TCell> = new Array<TCell>();
   for (let type in SHIP_DATA) {
-    let count = SHIP_DATA[type][0];
-    let decks = SHIP_DATA[type][1];
-    for (let i = 0; i < count; i++) {
-      let options = getCoordsDecks(decks, matrix, ships);
+    let countShip = SHIP_DATA[type][0];
+    let lengthShip = SHIP_DATA[type][1];
+    for (let i = 0; i < countShip; i++) {
+      let options = getCoordsOnDesks(lengthShip, matrix, ships);
 
-      createShip(options, decks, matrix, ships);
+      createShip(options, matrix, ships);
     }
   }
   return { ships, matrix };
 }
 
-const getRandom = (n: number): number => Math.floor(Math.random() * (n + 1));
-
-function getCoordsDecks(decks: number, matrix: Array<Array<number>>, ships: Array<TCell>): {
-  x: number,
-  y: number,
-  kx: number,
-  ky: number,
-} {
-  // kx == 0 и ky == 1 — корабль расположен горизонтально,
-  // kx == 1 и ky == 0 - вертикально.
-  const kx = getRandom(1);
-  const ky = (kx == 0) ? 1 : 0;
+function getCoordsOnDesks(
+  lengthShip: number,
+  matrix: Array<Array<number>>,
+  ships: Array<TCell>)
+: Pick<TCell, 'position' | 'direction' | 'length'> {
+  const direction = Boolean(getRandom(1));
 	let	x: number, y: number;
 
-  if (kx == 0) {
-    x = getRandom(9);
-    y = getRandom(10 - decks);
+  if (direction) {
+    x = getRandom(FIELD_SIZE - lengthShip);
+    y = getRandom(FIELD_SIZE - 1);
   } else {
-    x = getRandom(10 - decks);
-    y = getRandom(9);
+    x = getRandom(FIELD_SIZE - 1);
+    y = getRandom(FIELD_SIZE - lengthShip);
   }
 
-  const obj = {x, y, kx, ky}
-  const result = checkLocationShip(obj, decks, matrix);
+  const cell = {
+    position: { x, y },
+    direction,
+    length: lengthShip,
+  };
+  const result = checkLocationShip(cell, lengthShip, matrix);
 
-  if (!result) return getCoordsDecks(decks, matrix, ships);
-  return obj;
+  if (!result) {
+    return getCoordsOnDesks(lengthShip, matrix, ships);
+  }
+  return cell;
 }
 
 function checkLocationShip(
-  obj: { x: number, y: number, kx: number, ky: number, fromX?: number, toX?: number, fromY?: number, toY?: number },
-  decks: number,
+  cell: { position: TPosition, direction: boolean },
+  lengthShip: number,
   matrix: Array<Array<number>>
 ) {
-  let { x, y, kx, ky, fromX, toX, fromY, toY } = obj;
+  const directionX = cell.direction ? 1 : 0;
+  const directionY = cell.direction ? 0 : 1;
 
-  fromX = (x == 0) ? x : x - 1;
-  if (x + kx * decks == 10 && kx == 1) toX = x + kx * decks;
-  else if (x + kx * decks < 10 && kx == 1) toX = x + kx * decks + 1;
-  // корабль расположен горизонтально вдоль нижней границы игрового поля
-  else if (x == 9 && kx == 0) toX = x + 1;
-  // корабль расположен горизонтально где-то по середине игрового поля
-  else if (x < 9 && kx == 0) toX = x + 2;
+  const { start: startX, end: endX } = getBorder(cell.position.x, directionX, lengthShip);
+  const { start: startY, end: endY } = getBorder(cell.position.y, directionY, lengthShip);
+  
+  if (endX === -1 || endY === -1) return false;
 
-  // формируем индексы начала и конца выборки по столбцам
-  // принцип такой же, как и для строк
-  fromY = (y == 0) ? y : y - 1;
-  if (y + ky * decks == 10 && ky == 1) toY = y + ky * decks;
-  else if (y + ky * decks < 10 && ky == 1) toY = y + ky * decks + 1;
-  else if (y == 9 && ky == 0) toY = y + 1;
-  else if (y < 9 && ky == 0) toY = y + 2;
+  const countCells =
+    matrix.slice(startX, endX)
+    .filter(arr => arr.slice(startY, endY).includes(1))
+    .length;
 
-  if (toX === undefined || toY === undefined) return false;
-
-  // отфильтровываем ячейки, получившегося двумерного массива,
-  // содержащие 1, если такие ячейки существуют - возвращаем false
-  if (matrix.slice(fromX, toX)
-    .filter(arr => arr.slice(fromY, toY).includes(1))
-    .length > 0) return false;
+  if (countCells > 0) return false;
   return true;
 }
 
 function createShip(
-  cell: { x: number, y: number, kx: number, ky: number },
-  decks: number, matrix: Array<Array<number>>,
+  cell: Pick<TCell, 'position' | 'direction' | 'length'>,
+  matrix: Array<Array<number>>,
   ships: Array<TCell>
 ) {
-  let { x, y, kx, ky } = cell;
-  let k = 0;
+  const directionX = cell.direction ? 1 : 0;
+  const directionY = cell.direction ? 0 : 1;
+  
   ships.push({
-    position: { x, y },
-    direction: Boolean(ky),
-    length: decks,
-    type: getTypeShips(decks),
+    position: cell.position,
+    direction: Boolean(directionY),
+    length: cell.length,
+    type: getTypeShips(cell.length),
   });
 
-  while (k < decks) {
-    const i = x + k * kx;
-    const j = y + k * ky;
+  for (let k = 0; k < cell.length; k++) {
+    const i = cell.position.x + k * directionX;
+    const j = cell.position.y + k * directionY;
 
     matrix[i][j] = 1;
-    k++;
   }
+}
+
+function getBorder(coord: number, direction: number, lengthShip: number) {
+  const start = (coord == 0) ? coord : coord - 1;
+  let end = -1;
+  if (direction == 1) {
+    const length = coord + direction * lengthShip;
+    end = Math.min(length + 1, FIELD_SIZE)
+  } else if (direction === 0) {
+    if (coord == FIELD_SIZE - 1) {
+      end = coord + 1;
+    } else if (coord < FIELD_SIZE - 1) {
+      end = coord + 2;
+    }
+  }
+  return { start, end };
 }

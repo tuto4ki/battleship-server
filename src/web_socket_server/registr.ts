@@ -3,7 +3,14 @@ import { MESSAGE_ERROR } from './constants';
 import { TUser } from './type';
 import { getUserByName, lastIndex } from './common';
 
-export default function registr(user: TUser, usersDB: Map<number, TUser>, ws: WebSocket) {
+export function register(user: TUser, usersDB: Map<number, TUser>, ws: WebSocket) {
+  const resp = addUser(user, usersDB, ws);
+  const respJSON = JSON.stringify(resp);
+  console.log('reg', respJSON);
+  ws.send(respJSON);
+}
+
+function addUser(user: TUser, usersDB: Map<number, TUser>, ws: WebSocket) {
   if (!isValidationUser(user)) {
     return {
       type: 'reg',
@@ -21,6 +28,7 @@ export default function registr(user: TUser, usersDB: Map<number, TUser>, ws: We
 
   if (indexUser) {
     if (indexUser.password === user.password) {
+      indexUser.ws = ws;
       return {
         type: 'reg',
         data: JSON.stringify({

@@ -15,6 +15,7 @@ export function attack(
 
   const player = roomsCurrent.usersID.find((user) => user.index === data.indexPlayer);
   if (player?.attackMatrix[data.x][data.y]) {
+    sendMessageAttack(player, [{ x: data.x, y: data.y }], roomsCurrent, usersDB, getEnumStatusAttack(player?.attackMatrix[data.x][data.y]));
     return;
   }
 
@@ -58,7 +59,13 @@ export function attack(
   }
 }
 
-function sendMessageAttack (player: TUsersInRoom, killCell: TPosition[], roomsCurrent: TRoom, usersDB: Map<number, TUser>, status: EShotType) {
+function sendMessageAttack(
+  player: TUsersInRoom,
+  killCell: TPosition[],
+  roomsCurrent: TRoom,
+  usersDB: Map<number, TUser>,
+  status: EShotType
+) {
   const whoAttack = {
     type: "turn",
     data: JSON.stringify({ currentPlayer: roomsCurrent.currentPlayer}),
@@ -114,6 +121,17 @@ function getNumberStatusAttack(status: EShotType) {
       return 1;
     default:
       return 3;
+  }
+}
+
+function getEnumStatusAttack(status: number) {
+  switch(status) {
+    case 2:
+      return EShotType.killed;
+    case 1:
+      return EShotType.shot;
+    default:
+      return EShotType.miss;
   }
 }
 

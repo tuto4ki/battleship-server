@@ -2,7 +2,7 @@ import WebSocket from 'ws';
 
 import { getUserByWs } from './common';
 import { createGame } from './game';
-import { randomLocationShips } from './randomShips';
+import { getRandomLocationShips } from './randomShips';
 import { addShips, createRoom, updateRooms } from './rooms';
 import { TRoom, TUser } from './type';
 import { BOT_INDEX } from './constants';
@@ -17,7 +17,7 @@ export function startSingleMode(usersDB: Map<number, TUser>, roomsDB: Map<number
     
       updateRooms(roomsDB, usersDB);
 
-      const { ships, matrix } = randomLocationShips();
+      const { ships, matrix } = getRandomLocationShips();
       const botShips = {
         indexPlayer: BOT_INDEX,
         gameId: indexRoom,

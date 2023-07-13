@@ -2,7 +2,7 @@ import WebSocket, { WebSocketServer as WSWebSocketServer } from 'ws';
 const WebSocketServer = WebSocket.Server || WSWebSocketServer;
 import 'dotenv/config';
 
-import registr from './registr.js';
+import { register } from './registr.js';
 import { createRoom, addShips, updateRooms } from './rooms.js';
 import { createGame, sendUpdateWins } from './game.js';
 import { attack, randomAttack } from './attack.js';
@@ -11,7 +11,6 @@ import { getUserByWs } from './common.js';
 import { disconnectUser } from './wsListener.js';
 import { startSingleMode } from './singlePlay.js';
 import { BOT_INDEX } from './constants.js';
-
 
 const wsServer = new WebSocketServer({ port: Number(process.env.PORT) });
 const usersDB: Map<number, TUser> = new Map<number, TUser>();
@@ -33,11 +32,7 @@ wsServer.on('connection', (ws) => {
       switch (jsonMessage.type) {
         case 'reg':
           const data = JSON.parse(jsonMessage.data);
-          const resp = registr(data, usersDB, ws);
-          const respJSON = JSON.stringify(resp);
-          console.log('reg', respJSON);
-          ws.send(respJSON);
-
+          register(data, usersDB, ws);
           updateRooms(roomsDB, usersDB);
           sendUpdateWins(winsDB, usersDB);
           break;
@@ -49,8 +44,7 @@ wsServer.on('connection', (ws) => {
           }
           break;
         case 'add_user_to_room':
-          const data2 = JSON.parse(jsonMessage.data);
-          const indexRoom = +data2.indexRoom;
+          const indexRoom = JSON.parse(jsonMessage.data).indexRoom;
           const idUserAdd = getUserByWs(usersDB, ws);
           if (idUserAdd) {
             createGame(roomsDB, usersDB, indexRoom, idUserAdd.index);

@@ -1,11 +1,11 @@
-import { CELL_COUNT } from './constants';
+import { CELL_COUNT, PLAYER_COUNT } from './constants';
 import { removeRoom, updateRooms } from './rooms';
 import { TRoom, TUser, TUsersInRoom, TWins } from './type';
 
 export function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>, indexRoom: number, indexUser: number) {
   const room = roomsDB.get(indexRoom);
   if (room?.indexRoom === indexRoom) {
-    if (room.usersID.length < 2 && room.usersID[0].index !== indexUser) {
+    if (room.usersID.length < PLAYER_COUNT && room.usersID[0].index !== indexUser) {
       room.usersID.push({
         index: indexUser,
         ships: [],

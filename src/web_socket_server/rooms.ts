@@ -1,6 +1,6 @@
 import { TRequestAddShips, TRoom, TUser, TResponseRoom, TCell } from './type';
 import { FIELD_SIZE, PLAYER_COUNT } from './constants';
-import { createFillMatrix, lastIndex } from './common';
+import { createFillMatrix, getDirection, lastIndex } from './common';
 
 export function createRoom(roomsDB: Map<number, TRoom>, user: TUser) {
   try {
@@ -119,8 +119,9 @@ export function addShips(currentRoom: TRoom, usersDB: Map<number, TUser>, data: 
 function createShipsMatrix(ships: TCell[]) {
   const matrix: Array<Array<number>> = createFillMatrix(FIELD_SIZE, 0);
   for (let i = 0; i < ships.length; i++) {
-    const directionX = ships[i].direction ? 0 : 1;
-    const directionY = ships[i].direction ? 1 : 0;
+    //const directionX = ships[i].direction ? 0 : 1;
+    //const directionY = ships[i].direction ? 1 : 0;
+    const { directionX, directionY } = getDirection(ships[i].direction);
     const start_x = ships[i].position.x;
     const start_y = ships[i].position.y;
     for (let j = 0; j < ships[i].length; j++) {

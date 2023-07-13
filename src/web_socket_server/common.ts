@@ -42,3 +42,16 @@ export function getTypeShips(type: number) {
 export function createFillMatrix(size: number, number: number): Array<Array<number>> {
   return [...Array(size)].map(() => Array(size).fill(number));
 }
+
+export function getRandom(max: number): number {
+  return Math.floor(Math.random() * (max + 1));
+}
+
+export function getDirection(direction: boolean) {
+  const directionX = direction ? 0 : 1;
+  const directionY = direction ? 1 : 0;
+  return {
+    directionX,
+    directionY
+  };
+}
