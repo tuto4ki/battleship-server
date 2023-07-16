@@ -7,12 +7,14 @@ export function createRoom(roomsDB: Map<number, TRoom>, user: TUser) {
     const idRoom = lastIndex(roomsDB) + 1;
     roomsDB.set(idRoom, {
       indexRoom: idRoom,
-      usersID: [{
-        index: user.index,
-        ships: [],
-        shipsMatrix: [],
-        attackMatrix: [],
-      }],
+      usersID: [
+        {
+          index: user.index,
+          ships: [],
+          shipsMatrix: [],
+          attackMatrix: [],
+        },
+      ],
       currentPlayer: user.index,
     });
     return idRoom;
@@ -23,36 +25,40 @@ export function createRoom(roomsDB: Map<number, TRoom>, user: TUser) {
 
 function getRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
   const rooms = [...roomsDB].reduce((arr, item) => {
-    if (item[1].usersID.length < PLAYER_COUNT ) {
+    if (item[1].usersID.length < PLAYER_COUNT) {
       const user = usersDB.get(item[1].usersID[0].index);
-      
+
       if (user) {
         const isUserInGame = userInGame(roomsDB, user);
         if (isUserInGame)
           arr.push({
             roomId: item[1].indexRoom,
-            roomUsers: [{
-              name: user.name,
-              index: user.index,
-            }],
+            roomUsers: [
+              {
+                name: user.name,
+                index: user.index,
+              },
+            ],
           });
       }
     }
     return arr;
   }, new Array<TResponseRoom>());
-  
+
   return {
-    type: "update_room",
+    type: 'update_room',
     data: JSON.stringify(rooms),
     id: 0,
   };
 }
 
-function userInGame (roomsDB: Map<number, TRoom>, user: TUser): boolean {
-  for(let room of roomsDB.values()) {
+function userInGame(roomsDB: Map<number, TRoom>, user: TUser): boolean {
+  for (const room of roomsDB.values()) {
     if (room.usersID.length === PLAYER_COUNT) {
-      const userPlay = room.usersID.find((userInGame) => userInGame.index === user.index);
-      
+      const userPlay = room.usersID.find(
+        (userInGame) => userInGame.index === user.index,
+      );
+
       if (userPlay) {
         return false;
       }
@@ -61,22 +67,31 @@ function userInGame (roomsDB: Map<number, TRoom>, user: TUser): boolean {
   return true;
 }
 
-export function updateRooms(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>) {
+export function updateRooms(
+  roomsDB: Map<number, TRoom>,
+  usersDB: Map<number, TUser>,
+) {
   const rooms = getRooms(roomsDB, usersDB);
   const roomsJSON = JSON.stringify(rooms);
-  console.log("update_room", roomsJSON);
+  console.log('update_room', roomsJSON);
   usersDB.forEach((user) => {
     user.ws?.send(roomsJSON);
   });
 }
 
-export function addShips(currentRoom: TRoom, usersDB: Map<number, TUser>, data: TRequestAddShips) {
+export function addShips(
+  currentRoom: TRoom,
+  usersDB: Map<number, TUser>,
+  data: TRequestAddShips,
+) {
   let countUserReady = 0;
   const idUser = data.indexPlayer;
   for (let i = 0; i < currentRoom.usersID.length; i++) {
     if (currentRoom.usersID[i].index === idUser) {
       currentRoom.usersID[i].ships = data.ships;
-      currentRoom.usersID[i].shipsMatrix = createShipsMatrix(currentRoom.usersID[i].ships);
+      currentRoom.usersID[i].shipsMatrix = createShipsMatrix(
+        currentRoom.usersID[i].ships,
+      );
       currentRoom.usersID[i].attackMatrix = createFillMatrix(FIELD_SIZE, 0);
     }
 
@@ -87,30 +102,29 @@ export function addShips(currentRoom: TRoom, usersDB: Map<number, TUser>, data: 
 
   if (currentRoom.usersID.length === countUserReady) {
     currentRoom.currentPlayer = data.indexPlayer;
-    for(let i = 0; i < currentRoom.usersID.length; i++) {
+    for (let i = 0; i < currentRoom.usersID.length; i++) {
       const user = currentRoom.usersID[i];
       const startGame = {
-        type: "start_game",
+        type: 'start_game',
         data: JSON.stringify({
           ships: user.ships,
           currentPlayerIndex: user.index,
         }),
         id: 0,
-      }
+      };
 
       const startGameJSON = JSON.stringify(startGame);
-      console.log("start_game", startGameJSON);
+      console.log('start_game', startGameJSON);
       usersDB.get(user.index)?.ws?.send(startGameJSON);
       const whoAttack = {
-        type: "turn",
-        data: JSON.stringify({ currentPlayer: currentRoom.currentPlayer}),
+        type: 'turn',
+        data: JSON.stringify({ currentPlayer: currentRoom.currentPlayer }),
         id: 0,
-      }
+      };
 
       const whoAttackJSON = JSON.stringify(whoAttack);
-      console.log("turn", whoAttack)
+      console.log('turn', whoAttack);
       usersDB.get(user.index)?.ws?.send(whoAttackJSON);
-
     }
   }
   return false;
@@ -119,8 +133,6 @@ export function addShips(currentRoom: TRoom, usersDB: Map<number, TUser>, data: 
 function createShipsMatrix(ships: TCell[]) {
   const matrix: Array<Array<number>> = createFillMatrix(FIELD_SIZE, 0);
   for (let i = 0; i < ships.length; i++) {
-    //const directionX = ships[i].direction ? 0 : 1;
-    //const directionY = ships[i].direction ? 1 : 0;
     const { directionX, directionY } = getDirection(ships[i].direction);
     const start_x = ships[i].position.x;
     const start_y = ships[i].position.y;

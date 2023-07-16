@@ -13,7 +13,7 @@ export const CELL_COUNT = 20;
 
 export const BOT_INDEX = -1;
 
-export let SHIP_DATA: TSHIP_DATA = {
+export const SHIP_DATA: TSHIP_DATA = {
   four: [1, 4],
   three: [2, 3],
   two: [3, 2],

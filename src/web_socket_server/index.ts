@@ -86,7 +86,7 @@ wsServer.on('connection', (ws) => {
 
   ws.on('close', () => {
     disconnectUser(ws, usersDB, roomsDB, winsDB);
-  
+
     console.log('Connection close');
   });
 });

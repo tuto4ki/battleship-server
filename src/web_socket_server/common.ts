@@ -2,7 +2,7 @@ import WebSocket from 'ws';
 import { TUser } from './type';
 
 export function getUserByName(userDB: Map<number, TUser>, name: string) {
-  for (let user of userDB.values()) {
+  for (const user of userDB.values()) {
     if (user.name === name) {
       return user;
     }
@@ -11,7 +11,7 @@ export function getUserByName(userDB: Map<number, TUser>, name: string) {
 }
 
 export function getUserByWs(userDB: Map<number, TUser>, ws: WebSocket) {
-  for (let user of userDB.values()) {
+  for (const user of userDB.values()) {
     if (user.ws === ws) {
       return user;
     }
@@ -27,7 +27,7 @@ export function lastIndex<T>(map: Map<number, T>) {
 }
 
 export function getTypeShips(type: number) {
-  switch(type) {
+  switch (type) {
     case 4:
       return 'huge';
     case 3:
@@ -39,7 +39,10 @@ export function getTypeShips(type: number) {
   }
 }
 
-export function createFillMatrix(size: number, number: number): Array<Array<number>> {
+export function createFillMatrix(
+  size: number,
+  number: number,
+): Array<Array<number>> {
   return [...Array(size)].map(() => Array(size).fill(number));
 }
 
@@ -52,6 +55,6 @@ export function getDirection(direction: boolean) {
   const directionY = direction ? 1 : 0;
   return {
     directionX,
-    directionY
+    directionY,
   };
 }

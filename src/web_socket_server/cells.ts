@@ -4,11 +4,12 @@ import { getDirection } from './common';
 
 export function getEmptyCells(cellKill: TCell): Array<TPosition> {
   const emptyCells = new Array<TPosition>();
- 
+
   const { directionX, directionY } = getDirection(cellKill.direction);
 
   const maxValueX = directionX * cellKill.length + (directionX ? 1 : 2);
-  const bottomLine = cellKill.position.y + 1 + directionY * (cellKill.length - 1);
+  const bottomLine =
+    cellKill.position.y + 1 + directionY * (cellKill.length - 1);
   if (bottomLine < FIELD_SIZE) {
     emptyCells.push(...getHorizontalLine(bottomLine, maxValueX, cellKill));
   }
@@ -19,7 +20,8 @@ export function getEmptyCells(cellKill: TCell): Array<TPosition> {
   }
 
   const maxValueY = directionY * cellKill.length + (directionY ? 1 : 2);
-  const rightLine = cellKill.position.x + 1 + directionX * (cellKill.length - 1);
+  const rightLine =
+    cellKill.position.x + 1 + directionX * (cellKill.length - 1);
   if (rightLine < FIELD_SIZE) {
     emptyCells.push(...getVerticalLine(rightLine, maxValueY, cellKill));
   }
@@ -32,7 +34,10 @@ export function getEmptyCells(cellKill: TCell): Array<TPosition> {
   return emptyCells;
 }
 
-export function getKillOneCell(ships: TCell[], {x, y}: TPosition): TCell | undefined {
+export function getKillOneCell(
+  ships: TCell[],
+  { x, y }: TPosition,
+): TCell | undefined {
   for (let i = 0; i < ships.length; i++) {
     const { directionX, directionY } = getDirection(ships[i].direction);
     if (
@@ -47,11 +52,11 @@ export function getKillOneCell(ships: TCell[], {x, y}: TPosition): TCell | undef
   return;
 }
 
-export function getKillCells (cellKill: TCell): Array<TPosition> {
+export function getKillCells(cellKill: TCell): Array<TPosition> {
   const emptyCells = new Array<TPosition>();
   const { directionX, directionY } = getDirection(cellKill.direction);
 
-  const {x: startX, y: startY } = cellKill.position;
+  const { x: startX, y: startY } = cellKill.position;
 
   for (let i = 0; i < cellKill.length; i++) {
     emptyCells.push({
@@ -63,11 +68,18 @@ export function getKillCells (cellKill: TCell): Array<TPosition> {
   return emptyCells;
 }
 
-function getHorizontalLine(bottomLine: number, maxValueX: number, cellKill: TCell) {
+function getHorizontalLine(
+  bottomLine: number,
+  maxValueX: number,
+  cellKill: TCell,
+) {
   const emptyCells = new Array<TPosition>();
   if (bottomLine < FIELD_SIZE) {
     for (let i = -1; i < maxValueX; i++) {
-      if (cellKill.position.x + i >= 0 && cellKill.position.x + i < FIELD_SIZE) {
+      if (
+        cellKill.position.x + i >= 0 &&
+        cellKill.position.x + i < FIELD_SIZE
+      ) {
         emptyCells.push({
           x: cellKill.position.x + i,
           y: bottomLine,
@@ -78,7 +90,11 @@ function getHorizontalLine(bottomLine: number, maxValueX: number, cellKill: TCel
   return emptyCells;
 }
 
-function getVerticalLine(rightLine: number, maxValueY: number, cellKill: TCell) {
+function getVerticalLine(
+  rightLine: number,
+  maxValueY: number,
+  cellKill: TCell,
+) {
   const emptyCells = new Array<TPosition>();
   for (let i = 0; i < maxValueY; i++) {
     if (cellKill.position.y + i >= 0 && cellKill.position.y + i < FIELD_SIZE) {

@@ -2,10 +2,18 @@ import { CELL_COUNT, PLAYER_COUNT } from './constants';
 import { removeRoom, updateRooms } from './rooms';
 import { TRoom, TUser, TUsersInRoom, TWins } from './type';
 
-export function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUser>, indexRoom: number, indexUser: number) {
+export function createGame(
+  roomsDB: Map<number, TRoom>,
+  usersDB: Map<number, TUser>,
+  indexRoom: number,
+  indexUser: number,
+) {
   const room = roomsDB.get(indexRoom);
   if (room?.indexRoom === indexRoom) {
-    if (room.usersID.length < PLAYER_COUNT && room.usersID[0].index !== indexUser) {
+    if (
+      room.usersID.length < PLAYER_COUNT &&
+      room.usersID[0].index !== indexUser
+    ) {
       room.usersID.push({
         index: indexUser,
         ships: [],
@@ -13,10 +21,10 @@ export function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUs
         attackMatrix: [],
       });
 
-      for(let i = 0; i < room.usersID.length; i++) {
+      for (let i = 0; i < room.usersID.length; i++) {
         const currentIdUser = room.usersID[i].index;
         const res = {
-          type: "create_game",
+          type: 'create_game',
           data: JSON.stringify({
             idGame: indexRoom,
             idPlayer: currentIdUser,
@@ -24,7 +32,7 @@ export function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUs
           id: 0,
         };
         const respJSON = JSON.stringify(res);
-        console.log("create_game", respJSON);
+        console.log('create_game', respJSON);
         usersDB.get(currentIdUser)?.ws?.send(respJSON);
       }
     }
@@ -33,7 +41,13 @@ export function createGame(roomsDB: Map<number, TRoom>, usersDB: Map<number, TUs
   return false;
 }
 
-export function gameOver(player: TUsersInRoom, roomsCurrent: TRoom, usersDB: Map<number, TUser>, roomDB: Map<number, TRoom>, winsDB: TWins[]) {
+export function gameOver(
+  player: TUsersInRoom,
+  roomsCurrent: TRoom,
+  usersDB: Map<number, TUser>,
+  roomDB: Map<number, TRoom>,
+  winsDB: TWins[],
+) {
   const winData = {
     winPlayer: player.index,
   };
@@ -69,8 +83,8 @@ export function gameOver(player: TUsersInRoom, roomsCurrent: TRoom, usersDB: Map
 
 export function isGameOver(ships: number[][]) {
   let count = 0;
-  for(let i = 0; i < ships.length; i++) {
-    for(let j = 0; j < ships[i].length; j++) {
+  for (let i = 0; i < ships.length; i++) {
+    for (let j = 0; j < ships[i].length; j++) {
       if (ships[i][j] === 2) {
         count++;
       }
@@ -80,9 +94,9 @@ export function isGameOver(ships: number[][]) {
 }
 
 export function sendUpdateWins(winsDB: TWins[], usersDB: Map<number, TUser>) {
-  const updateWins = new Array();
+  const updateWins = [];
   for (let i = 0; i < winsDB.length; i++) {
-    const user =  usersDB.get(winsDB[i].idUser);
+    const user = usersDB.get(winsDB[i].idUser);
     updateWins.push({
       name: user?.name,
       wins: winsDB[i].wins,
@@ -92,9 +106,9 @@ export function sendUpdateWins(winsDB: TWins[], usersDB: Map<number, TUser>) {
     type: 'update_winners',
     data: JSON.stringify(updateWins),
     id: 0,
-  })
+  });
 
-  for (let user of usersDB.values()) {
-    user.ws?.send(updateWinsJSON)
+  for (const user of usersDB.values()) {
+    user.ws?.send(updateWinsJSON);
   }
 }

@@ -3,7 +3,11 @@ import { MESSAGE_ERROR } from './constants';
 import { TUser } from './type';
 import { getUserByName, lastIndex } from './common';
 
-export function register(user: TUser, usersDB: Map<number, TUser>, ws: WebSocket) {
+export function register(
+  user: TUser,
+  usersDB: Map<number, TUser>,
+  ws: WebSocket,
+) {
   const resp = addUser(user, usersDB, ws);
   const respJSON = JSON.stringify(resp);
   console.log('reg', respJSON);

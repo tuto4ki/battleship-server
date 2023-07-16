@@ -1,15 +1,20 @@
-import { createFillMatrix, getTypeShips, getRandom, getDirection } from './common';
+import {
+  createFillMatrix,
+  getTypeShips,
+  getRandom,
+  getDirection,
+} from './common';
 import { FIELD_SIZE, SHIP_DATA } from './constants';
-import { TCell, TPosition } from './type';
+import { TCell } from './type';
 
 export function getRandomLocationShips() {
   const matrix: Array<Array<number>> = createFillMatrix(FIELD_SIZE, 0);
   const ships: Array<TCell> = new Array<TCell>();
-  for (let type in SHIP_DATA) {
-    let countShip = SHIP_DATA[type][0];
-    let lengthShip = SHIP_DATA[type][1];
+  for (const type in SHIP_DATA) {
+    const countShip = SHIP_DATA[type][0];
+    const lengthShip = SHIP_DATA[type][1];
     for (let i = 0; i < countShip; i++) {
-      let options = getCoordsOnDesks(lengthShip, matrix, ships);
+      const options = getCoordsOnDesks(lengthShip, matrix, ships);
 
       createShip(options, matrix, ships);
     }
@@ -20,10 +25,10 @@ export function getRandomLocationShips() {
 function getCoordsOnDesks(
   lengthShip: number,
   matrix: Array<Array<number>>,
-  ships: Array<TCell>)
-: Pick<TCell, 'position' | 'direction' | 'length'> {
+  ships: Array<TCell>,
+): Pick<TCell, 'position' | 'direction' | 'length'> {
   const direction = Boolean(getRandom(1));
-	let	x: number, y: number;
+  let x: number, y: number;
 
   if (direction) {
     x = getRandom(FIELD_SIZE - 1);
@@ -47,20 +52,28 @@ function getCoordsOnDesks(
 }
 
 function checkLocationShip(
-  cell: { position: TPosition, direction: boolean },
+  cell: Pick<TCell, 'position' | 'direction'>,
   lengthShip: number,
-  matrix: Array<Array<number>>
+  matrix: Array<Array<number>>,
 ) {
   const { directionX, directionY } = getDirection(cell.direction);
-  const { start: startX, end: endX } = getBorder(cell.position.x, directionX, lengthShip);
-  const { start: startY, end: endY } = getBorder(cell.position.y, directionY, lengthShip);
-  
-  if (endX === -1 || endY === -1) return false;
+  const { start: startX, end: endX } = getBorder(
+    cell.position.x,
+    directionX,
+    lengthShip,
+  );
+  const { start: startY, end: endY } = getBorder(
+    cell.position.y,
+    directionY,
+    lengthShip,
+  );
+  if (endX === -1 || endY === -1) {
+    return false;
+  }
 
-  const countCells =
-    matrix.slice(startX, endX)
-    .filter(arr => arr.slice(startY, endY).includes(1))
-    .length;
+  const countCells = matrix
+    .slice(startX, endX)
+    .filter((arr) => arr.slice(startY, endY).includes(1)).length;
 
   if (countCells > 0) return false;
   return true;
@@ -69,7 +82,7 @@ function checkLocationShip(
 function createShip(
   cell: Pick<TCell, 'position' | 'direction' | 'length'>,
   matrix: Array<Array<number>>,
-  ships: Array<TCell>
+  ships: Array<TCell>,
 ) {
   const { directionX, directionY } = getDirection(cell.direction);
 
@@ -89,11 +102,11 @@ function createShip(
 }
 
 function getBorder(coord: number, direction: number, lengthShip: number) {
-  const start = (coord == 0) ? coord : coord - 1;
+  const start = coord == 0 ? coord : coord - 1;
   let end = -1;
   if (direction == 1) {
     const length = coord + direction * lengthShip;
-    end = Math.min(length + 1, FIELD_SIZE)
+    end = Math.min(length + 1, FIELD_SIZE);
   } else if (direction === 0) {
     if (coord == FIELD_SIZE - 1) {
       end = coord + 1;
