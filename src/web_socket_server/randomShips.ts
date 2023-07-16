@@ -1,4 +1,4 @@
-import { createFillMatrix, getTypeShips, getRandom } from './common';
+import { createFillMatrix, getTypeShips, getRandom, getDirection } from './common';
 import { FIELD_SIZE, SHIP_DATA } from './constants';
 import { TCell, TPosition } from './type';
 
@@ -26,11 +26,11 @@ function getCoordsOnDesks(
 	let	x: number, y: number;
 
   if (direction) {
-    x = getRandom(FIELD_SIZE - lengthShip);
-    y = getRandom(FIELD_SIZE - 1);
-  } else {
     x = getRandom(FIELD_SIZE - 1);
     y = getRandom(FIELD_SIZE - lengthShip);
+  } else {
+    x = getRandom(FIELD_SIZE - lengthShip);
+    y = getRandom(FIELD_SIZE - 1);
   }
 
   const cell = {
@@ -51,9 +51,7 @@ function checkLocationShip(
   lengthShip: number,
   matrix: Array<Array<number>>
 ) {
-  const directionX = cell.direction ? 1 : 0;
-  const directionY = cell.direction ? 0 : 1;
-
+  const { directionX, directionY } = getDirection(cell.direction);
   const { start: startX, end: endX } = getBorder(cell.position.x, directionX, lengthShip);
   const { start: startY, end: endY } = getBorder(cell.position.y, directionY, lengthShip);
   
@@ -73,9 +71,8 @@ function createShip(
   matrix: Array<Array<number>>,
   ships: Array<TCell>
 ) {
-  const directionX = cell.direction ? 1 : 0;
-  const directionY = cell.direction ? 0 : 1;
-  
+  const { directionX, directionY } = getDirection(cell.direction);
+
   ships.push({
     position: cell.position,
     direction: Boolean(directionY),
